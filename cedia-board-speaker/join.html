@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>CEDIA Board — Request to Speak</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #02050B;
+      --accent: #C15027;
+      --text: #FFFFFF;
+      --text-dim: rgba(255,255,255,0.5);
+      --text-faint: rgba(255,255,255,0.18);
+      --card: rgba(255,255,255,0.05);
+      --card-border: rgba(255,255,255,0.09);
+      --input-bg: rgba(255,255,255,0.07);
+      --input-border: rgba(255,255,255,0.12);
+      --input-focus: rgba(193,80,39,0.5);
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 100% 40% at 50% 0%, rgba(193,80,39,0.14) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0 0 env(safe-area-inset-bottom, 20px);
+    }
+
+    /* ---- Header ---- */
+    .header {
+      padding: 28px 24px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .logo img {
+      height: 28px;
+      opacity: 0.9;
+    }
+
+    .live-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .live-dot::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ---- Topic pill ---- */
+    .topic-section {
+      padding: 18px 24px 0;
+    }
+
+    .topic-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .topic-pill {
+      background: rgba(193,80,39,0.1);
+      border: 1px solid rgba(193,80,39,0.25);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--text);
+      min-height: 44px;
+      transition: all 0.3s;
+    }
+
+    .topic-pill.no-topic {
+      background: var(--card);
+      border-color: var(--card-border);
+      color: var(--text-dim);
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    /* ---- Forms ---- */
+    .form-section {
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .form-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .field input, .field textarea {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-appearance: none;
+    }
+
+    .field input::placeholder, .field textarea::placeholder {
+      color: var(--text-faint);
+    }
+
+    .field input:focus, .field textarea:focus {
+      border-color: var(--accent);
+      background: rgba(255,255,255,0.09);
+    }
+
+    .field textarea {
+      resize: none;
+      height: 90px;
+      line-height: 1.5;
+    }
+
+    .char-count {
+      font-size: 0.75rem;
+      color: var(--text-faint);
+      text-align: right;
+      margin-top: -4px;
+    }
+
+    /* ---- Submit button ---- */
+    .btn-join {
+      width: 100%;
+      padding: 17px;
+      background: var(--accent);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    .btn-join:hover { background: #D4613A; }
+    .btn-join:active { transform: scale(0.98); }
+    .btn-join:disabled {
+      background: rgba(193,80,39,0.35);
+      cursor: not-allowed;
+    }
+
+    /* ---- Confirmation view ---- */
+    .confirmation {
+      display: none;
+      padding: 40px 24px;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      text-align: center;
+      flex: 1;
+    }
+
+    .confirmation.active { display: flex; }
+
+    .check-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(34,197,94,0.15);
+      border: 2px solid rgba(34,197,94,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes pop {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .check-icon svg { width: 36px; height: 36px; }
+
+    .conf-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .position-badge {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .position-number {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 4rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .position-label {
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .conf-name {
+      font-size: 0.95rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .conf-name strong { color: var(--text); }
+
+    .btn-another {
+      width: 100%;
+      padding: 17px;
+      background: transparent;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      color: var(--text-dim);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      margin-top: auto;
+    }
+
+    .btn-another:hover { border-color: var(--accent); color: var(--text); }
+
+    /* Error toast */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--danger);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      max-width: 320px;
+      text-align: center;
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div class="page" id="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <img src="https://cedia.org/site/assets/files/1033/cedia_logo_tagline_white_email-1.png" alt="CEDIA">
+    </div>
+    <div class="live-dot">Live</div>
+  </div>
+
+  <!-- Topic -->
+  <div class="topic-section">
+    <div class="topic-label">Current Topic</div>
+    <div class="topic-pill no-topic" id="topicPill">Waiting for moderator...</div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-section" id="formSection">
+    <div class="form-title">Request to Speak</div>
+
+    <div class="field">
+      <label for="nameInput">Your Name</label>
+      <input type="text" id="nameInput" placeholder="e.g. James Ratcliffe" autocomplete="name" maxlength="60">
+    </div>
+
+    <div class="field">
+      <label for="subjectInput">What would you like to say?</label>
+      <textarea id="subjectInput" placeholder="Brief subject or point you'd like to raise..." maxlength="120"></textarea>
+      <div class="char-count"><span id="charCount">0</span>/120</div>
+    </div>
+
+    <button class="btn-join" id="joinBtn" onclick="joinQueue()">Join Queue</button>
+  </div>
+
+  <!-- Confirmation -->
+  <div class="confirmation" id="confirmation">
+    <div class="check-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+
+    <div class="conf-title">You're in the queue</div>
+
+    <div class="position-badge">
+      <div class="position-number" id="positionNumber">—</div>
+      <div class="position-label">in the queue</div>
+    </div>
+
+    <div class="conf-name" id="confName"></div>
+
+    <button class="btn-another" onclick="resetForm()">Join Again for New Topic</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const client = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+  let currentTopic = '';
+  let submittedName = '';
+
+  // ---- Load current topic ----
+  async function loadTopic() {
+    const { data } = await client.from('meeting_state').select('topic').eq('id', 1).single();
+    if (data) updateTopic(data.topic);
+  }
+
+  function updateTopic(topic) {
+    currentTopic = topic || '';
+    const pill = document.getElementById('topicPill');
+    if (currentTopic.trim()) {
+      pill.textContent = currentTopic;
+      pill.classList.remove('no-topic');
+    } else {
+      pill.textContent = 'Waiting for moderator...';
+      pill.classList.add('no-topic');
+    }
+  }
+
+  // ---- Queue count for position display ----
+  async function getQueueCount() {
+    const { count } = await client.from('queue').select('*', { count: 'exact', head: true });
+    return count || 0;
+  }
+
+  // ---- Join queue ----
+  async function joinQueue() {
+    const name = document.getElementById('nameInput').value.trim();
+    const subject = document.getElementById('subjectInput').value.trim();
+
+    if (!name) { showToast('Please enter your name'); return; }
+    if (!subject) { showToast('Please add a brief subject'); return; }
+
+    const btn = document.getElementById('joinBtn');
+    btn.disabled = true;
+    btn.textContent = 'Joining...';
+
+    const { error } = await client.from('queue').insert({ name, subject });
+
+    if (error) {
+      showToast('Something went wrong. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Join Queue';
+      return;
+    }
+
+    submittedName = name;
+
+    // Get position
+    const pos = await getQueueCount();
+
+    // Show confirmation
+    document.getElementById('formSection').style.display = 'none';
+    const conf = document.getElementById('confirmation');
+    conf.classList.add('active');
+    document.getElementById('positionNumber').textContent = pos;
+    document.getElementById('confName').innerHTML =
+      `<strong>${esc(name)}</strong><br>Re: ${esc(subject)}`;
+  }
+
+  // ---- Reset form ----
+  function resetForm() {
+    document.getElementById('subjectInput').value = '';
+    document.getElementById('charCount').textContent = '0';
+    document.getElementById('joinBtn').disabled = false;
+    document.getElementById('joinBtn').textContent = 'Join Queue';
+    document.getElementById('formSection').style.display = 'flex';
+    document.getElementById('confirmation').classList.remove('active');
+  }
+
+  // ---- Char count ----
+  document.getElementById('subjectInput').addEventListener('input', function() {
+    document.getElementById('charCount').textContent = this.value.length;
+  });
+
+  // ---- Toast ----
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3200);
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---- Realtime: update topic live ----
+  client.channel('join-channel')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'meeting_state' }, payload => {
+      updateTopic(payload.new.topic);
+    })
+    .subscribe();
+
+  // ---- Page visibility ----
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadTopic();
+  });
+
+  loadTopic();
+</script>
+</body>
+</html>
