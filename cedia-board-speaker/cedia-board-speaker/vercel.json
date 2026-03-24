@@ -1,0 +1,11 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "routes": [
+    { "src": "/display", "dest": "/display.html" },
+    { "src": "/join", "dest": "/join.html" },
+    { "src": "/moderator", "dest": "/moderator.html" },
+    { "src": "/qr", "dest": "/qr.html" },
+    { "src": "/", "dest": "/index.html" }
+  ]
+}
