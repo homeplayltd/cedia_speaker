@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEDIA Board — Speaker Queue</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #02050B;
+      --accent: #C15027;
+      --text: #FFFFFF;
+      --text-dim: rgba(255,255,255,0.5);
+      --card: rgba(255,255,255,0.04);
+      --card-border: rgba(255,255,255,0.08);
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(193,80,39,0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 520px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .logo img { height: 34px; opacity: 0.9; }
+
+    .titles {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      line-height: 1;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .nav-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 20px 22px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .nav-card:hover {
+      border-color: rgba(193,80,39,0.4);
+      background: rgba(193,80,39,0.06);
+    }
+
+    .nav-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: rgba(193,80,39,0.15);
+      border: 1px solid rgba(193,80,39,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .nav-text { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+
+    .nav-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .nav-desc {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    .nav-arrow {
+      color: var(--text-dim);
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+
+    .nav-card:hover .nav-arrow { color: var(--accent); }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--card-border);
+    }
+
+    .footer {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.06em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="logo">
+    <img src="https://cedia.org/site/assets/files/1033/cedia_logo_tagline_white_email-1.png" alt="CEDIA">
+  </div>
+
+  <div class="titles">
+    <div class="title">Board Meeting<br>Speaker Queue</div>
+    <div class="subtitle">Real-time speaker management for CEDIA board meetings</div>
+  </div>
+
+  <div class="cards">
+
+    <a class="nav-card" href="/display">
+      <div class="nav-icon">📺</div>
+      <div class="nav-text">
+        <div class="nav-label">Display Screen</div>
+        <div class="nav-desc">Full-screen view for the meeting room TV or projector</div>
+      </div>
+      <div class="nav-arrow">→</div>
+    </a>
+
+    <a class="nav-card" href="/join">
+      <div class="nav-icon">✋</div>
+      <div class="nav-text">
+        <div class="nav-label">Request to Speak</div>
+        <div class="nav-desc">Board members use this page to join the speaker queue</div>
+      </div>
+      <div class="nav-arrow">→</div>
+    </a>
+
+    <a class="nav-card" href="/moderator">
+      <div class="nav-icon">🎛</div>
+      <div class="nav-text">
+        <div class="nav-label">Moderator Panel</div>
+        <div class="nav-desc">Set topics, manage the queue, and advance speakers</div>
+      </div>
+      <div class="nav-arrow">→</div>
+    </a>
+
+    <div class="divider"></div>
+
+    <a class="nav-card" href="/qr">
+      <div class="nav-icon">⬛</div>
+      <div class="nav-text">
+        <div class="nav-label">QR Code</div>
+        <div class="nav-desc">Print or display this so members can scan to join the queue</div>
+      </div>
+      <div class="nav-arrow">→</div>
+    </a>
+
+  </div>
+
+  <div class="footer">CEDIA Board Meeting Tools</div>
+
+</div>
+
+</body>
+</html>

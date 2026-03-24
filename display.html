@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEDIA Board Meeting — Speaker Display</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #02050B;
+      --accent: #C15027;
+      --accent-dim: rgba(193,80,39,0.18);
+      --text: #FFFFFF;
+      --text-dim: rgba(255,255,255,0.5);
+      --text-faint: rgba(255,255,255,0.18);
+      --card: rgba(255,255,255,0.04);
+      --card-border: rgba(255,255,255,0.07);
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow: hidden;
+    }
+
+    /* Subtle background texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(193,80,39,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 90% 90%, rgba(193,80,39,0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .screen {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      padding: 2.5vw 3vw;
+      gap: 2vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ---- HEADER ---- */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 2vh;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .logo img {
+      height: 3.5vh;
+      min-height: 28px;
+      max-height: 48px;
+      opacity: 0.9;
+    }
+
+    .meeting-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.9rem, 1.6vw, 1.4rem);
+      font-weight: 400;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* ---- TOPIC ---- */
+    .topic-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6vh;
+    }
+
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.65rem, 1vw, 0.85rem);
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    /* ---- MAIN AREA ---- */
+    .main {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 2vw;
+      align-items: start;
+    }
+
+    /* ---- SPEAKER CARD ---- */
+    .speaker-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 1.2vw;
+      padding: 3vh 2.5vw;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .speaker-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+    }
+
+    .speaker-card.empty::before {
+      background: var(--text-faint);
+    }
+
+    .now-speaking-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.65rem, 1vw, 0.85rem);
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .speaker-card.empty .now-speaking-label {
+      color: var(--text-dim);
+    }
+
+    .speaker-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8vh;
+    }
+
+    .speaker-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(2rem, 4.5vw, 5rem);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.01em;
+    }
+
+    .speaker-subject {
+      font-size: clamp(0.85rem, 1.4vw, 1.3rem);
+      font-weight: 400;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    .waiting-message {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(1.5rem, 3vw, 3.5rem);
+      font-weight: 300;
+      color: var(--text-faint);
+      letter-spacing: 0.02em;
+    }
+
+    /* ---- TIMER ---- */
+    .timer-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.3vh;
+    }
+
+    .timer-display {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(4rem, 8vw, 9rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      transition: color 0.3s;
+    }
+
+    .timer-display.normal { color: #FFFFFF; }
+    .timer-display.warning { color: #f97316; }
+    .timer-display.overtime {
+      color: var(--danger);
+      animation: pulse-red 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse-red {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .timer-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.6rem, 0.9vw, 0.8rem);
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+    }
+
+    .timer-label.normal { color: var(--text-dim); }
+    .timer-label.overtime { color: var(--danger); }
+
+    /* ---- QUEUE PANEL ---- */
+    .queue-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5vh;
+    }
+
+    .queue-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .queue-count {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.7rem, 1vw, 0.9rem);
+      font-weight: 400;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1vh;
+    }
+
+    .queue-item {
+      display: grid;
+      grid-template-columns: 2.5em 1fr;
+      gap: 1vw;
+      align-items: center;
+      padding: 1.4vh 1.2vw;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 0.6vw;
+      animation: slide-in 0.3s ease-out;
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .queue-number {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(1.2rem, 1.8vw, 2rem);
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .queue-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2vh;
+      min-width: 0;
+    }
+
+    .queue-item-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(1rem, 1.8vw, 2rem);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .queue-item-subject {
+      font-size: clamp(0.7rem, 1vw, 0.9rem);
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-queue {
+      padding: 3vh 0;
+      text-align: center;
+      color: var(--text-faint);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.9rem, 1.4vw, 1.3rem);
+      font-weight: 300;
+      letter-spacing: 0.08em;
+    }
+
+    /* ---- TOPIC BAR (bottom) ---- */
+    .topic-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6vh;
+      padding-top: 1.5vh;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .topic-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(1.2rem, 2.5vw, 2.8rem);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      line-height: 1.1;
+    }
+
+    .topic-text.no-topic {
+      color: var(--text-faint);
+      font-weight: 300;
+    }
+
+    /* Connection status dot */
+    .conn-dot {
+      position: fixed;
+      bottom: 1.5vh;
+      right: 1.5vw;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      transition: background 0.3s;
+    }
+    .conn-dot.disconnected { background: var(--danger); }
+  </style>
+</head>
+<body>
+
+<div class="screen">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <img src="https://cedia.org/site/assets/files/1033/cedia_logo_tagline_white_email-1.png" alt="CEDIA">
+    </div>
+    <div class="meeting-label">Board Meeting</div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- LEFT: Speaker + Timer -->
+    <div class="speaker-card" id="speakerCard">
+      <div class="now-speaking-label" id="speakingLabel">NOW SPEAKING</div>
+
+      <div class="speaker-info" id="speakerInfo">
+        <div class="waiting-message" id="waitingMsg">Waiting for first speaker</div>
+        <div class="speaker-name" id="speakerName" style="display:none"></div>
+        <div class="speaker-subject" id="speakerSubject" style="display:none"></div>
+      </div>
+
+      <div class="timer-block" id="timerBlock" style="display:none">
+        <div class="timer-display normal" id="timerDisplay">2:00</div>
+        <div class="timer-label normal" id="timerLabel">REMAINING</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Queue -->
+    <div class="queue-panel">
+      <div class="queue-header">
+        <div class="section-label">Next Up</div>
+        <div class="queue-count" id="queueCount"></div>
+      </div>
+      <div class="queue-list" id="queueList">
+        <div class="empty-queue">No speakers in queue</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM: Topic -->
+  <div class="topic-bar">
+    <div class="section-label">Current Topic</div>
+    <div class="topic-text no-topic" id="topicText">No topic set</div>
+  </div>
+
+</div>
+
+<div class="conn-dot" id="connDot" title="Connected"></div>
+
+<script>
+  const client = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+  let state = { topic: '', current_speaker_name: null, current_speaker_subject: null, speaker_started_at: null };
+  let queueItems = [];
+  let timerInterval = null;
+
+  // ---- Fetch data ----
+  async function loadState() {
+    const { data } = await client.from('meeting_state').select('*').eq('id', 1).single();
+    if (data) { state = data; renderState(); }
+  }
+
+  async function loadQueue() {
+    const { data } = await client.from('queue').select('*').order('joined_at', { ascending: true });
+    queueItems = data || [];
+    renderQueue();
+  }
+
+  // ---- Render state ----
+  function renderState() {
+    // Topic
+    const topicEl = document.getElementById('topicText');
+    if (state.topic && state.topic.trim()) {
+      topicEl.textContent = state.topic;
+      topicEl.classList.remove('no-topic');
+    } else {
+      topicEl.textContent = 'No topic set';
+      topicEl.classList.add('no-topic');
+    }
+
+    // Speaker
+    const card = document.getElementById('speakerCard');
+    const waitingMsg = document.getElementById('waitingMsg');
+    const speakerName = document.getElementById('speakerName');
+    const speakerSubject = document.getElementById('speakerSubject');
+    const timerBlock = document.getElementById('timerBlock');
+    const speakingLabel = document.getElementById('speakingLabel');
+
+    if (state.current_speaker_name) {
+      card.classList.remove('empty');
+      waitingMsg.style.display = 'none';
+      speakerName.style.display = 'block';
+      speakerSubject.style.display = 'block';
+      timerBlock.style.display = 'flex';
+      speakingLabel.textContent = 'NOW SPEAKING';
+      speakerName.textContent = state.current_speaker_name;
+      speakerSubject.textContent = state.current_speaker_subject || '';
+      startTimer();
+    } else {
+      card.classList.add('empty');
+      waitingMsg.style.display = 'block';
+      speakerName.style.display = 'none';
+      speakerSubject.style.display = 'none';
+      timerBlock.style.display = 'none';
+      speakingLabel.textContent = 'NOW SPEAKING';
+      stopTimer();
+    }
+  }
+
+  // ---- Render queue ----
+  function renderQueue() {
+    const list = document.getElementById('queueList');
+    const count = document.getElementById('queueCount');
+
+    if (!queueItems.length) {
+      list.innerHTML = '<div class="empty-queue">No speakers in queue</div>';
+      count.textContent = '';
+      return;
+    }
+
+    count.textContent = queueItems.length + ' waiting';
+    list.innerHTML = queueItems.map((item, i) => `
+      <div class="queue-item">
+        <div class="queue-number">${String(i + 1).padStart(2, '0')}</div>
+        <div class="queue-item-info">
+          <div class="queue-item-name">${esc(item.name)}</div>
+          <div class="queue-item-subject">${esc(item.subject)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ---- Timer ----
+  function startTimer() {
+    stopTimer();
+    timerInterval = setInterval(updateTimer, 250);
+    updateTimer();
+  }
+
+  function stopTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  }
+
+  function updateTimer() {
+    if (!state.speaker_started_at) return;
+    const elapsed = Math.floor((Date.now() - new Date(state.speaker_started_at).getTime()) / 1000);
+    const limit = CONFIG.SPEAKER_TIME_SECONDS;
+    const remaining = limit - elapsed;
+
+    const display = document.getElementById('timerDisplay');
+    const label = document.getElementById('timerLabel');
+
+    if (remaining > 0) {
+      display.textContent = formatTime(remaining);
+      if (remaining <= 30) {
+        display.className = 'timer-display warning';
+        label.className = 'timer-label warning';
+        label.textContent = 'REMAINING';
+      } else {
+        display.className = 'timer-display normal';
+        label.className = 'timer-label normal';
+        label.textContent = 'REMAINING';
+      }
+    } else {
+      const over = -remaining;
+      display.textContent = '+' + formatTime(over);
+      display.className = 'timer-display overtime';
+      label.className = 'timer-label overtime';
+      label.textContent = 'OVER TIME';
+    }
+  }
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---- Realtime ----
+  function subscribeRealtime() {
+    client.channel('display-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meeting_state' }, () => loadState())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, () => loadQueue())
+      .subscribe(status => {
+        const dot = document.getElementById('connDot');
+        dot.classList.toggle('disconnected', status !== 'SUBSCRIBED');
+      });
+  }
+
+  // ---- Page visibility — reconnect on tab focus ----
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { loadState(); loadQueue(); }
+  });
+
+  // ---- Init ----
+  loadState();
+  loadQueue();
+  subscribeRealtime();
+</script>
+</body>
+</html>
