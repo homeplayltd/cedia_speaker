@@ -57,7 +57,7 @@ returns void
 language sql
 security definer
 as $$
-  delete from queue;
+  delete from queue where true;
 $$;
 
 -- Grant execute to anon role
@@ -72,7 +72,7 @@ returns void
 language sql
 security definer
 as $$
-  delete from queue;
+  delete from queue where true;
   update meeting_state set
     topic = '',
     current_speaker_name = null,
@@ -93,7 +93,7 @@ returns void
 language sql
 security definer
 as $$
-  delete from queue;
+  delete from queue where true;
   update meeting_state set
     topic = new_topic,
     current_speaker_name = null,

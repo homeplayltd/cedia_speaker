@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CEDIA Board — QR Code</title>
+  <title>Speaker Queue — QR Code</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -179,6 +181,38 @@
       .qr-wrapper { border: 1px solid #ddd; }
       .logo img { filter: invert(1); }
     }
+
+    /* Home button */
+    .home-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.55);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .home-btn:hover {
+      background: rgba(193,80,39,0.15);
+      border-color: rgba(193,80,39,0.35);
+      color: #FFFFFF;
+    }
+    .home-btn svg {
+      width: 13px; height: 13px;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -221,8 +255,9 @@
 
 <script>
   // Derive join URL from current page origin
-  const joinUrl = window.location.origin + '/join.html';
+  const joinUrl = 'https://speaker-queue.homeplay.tv/join';
   document.getElementById('urlDisplay').textContent = joinUrl;
+  document.getElementById('urlDisplay').style.fontFamily = "'DM Sans', sans-serif";
 
   new QRCode(document.getElementById('qrcode'), {
     text: joinUrl,
