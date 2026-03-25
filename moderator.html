@@ -418,34 +418,29 @@
 
     /* Live connection indicator */
     .live-indicator {
-      position: fixed;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 200;
       display: flex;
       align-items: center;
-      gap: 7px;
-      padding: 6px 14px;
-      background: rgba(2,5,11,0.85);
-      border: 1px solid rgba(34,197,94,0.25);
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.3);
       border-radius: 20px;
-      backdrop-filter: blur(8px);
       pointer-events: none;
-      transition: border-color 0.4s;
+      transition: border-color 0.4s, background 0.4s;
     }
 
     .live-indicator.disconnected {
+      background: rgba(239,68,68,0.08);
       border-color: rgba(239,68,68,0.4);
     }
 
     .live-indicator-dot {
-      width: 7px;
-      height: 7px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       background: var(--success);
       flex-shrink: 0;
-      animation: live-pulse 2s ease-in-out infinite;
+      animation: live-pulse 1.5s ease-in-out infinite;
       transition: background 0.4s;
     }
 
@@ -455,13 +450,14 @@
     }
 
     @keyframes live-pulse {
-      0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
-      50%       { opacity: 0.85; transform: scale(1.15); box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+      0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.8); transform: scale(1); }
+      50%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); transform: scale(1.2); }
+      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); transform: scale(1); }
     }
 
     .live-indicator-text {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       font-weight: 600;
       letter-spacing: 0.18em;
       text-transform: uppercase;
@@ -475,11 +471,6 @@
   </style>
 </head>
 <body>
-<div class="live-indicator" id="liveIndicator">
-  <div class="live-indicator-dot"></div>
-  <span class="live-indicator-text" id="liveIndicatorText">Live Connection</span>
-</div>
-
 <a class="home-btn" href="/">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
@@ -496,6 +487,7 @@
     <div class="logo">
       <img src="https://cedia.org/site/assets/files/1033/cedia_logo_tagline_white_email-1.png" alt="CEDIA">
     </div>
+    <div class="live-indicator" id="liveIndicator"><div class="live-indicator-dot"></div><span class="live-indicator-text" id="liveIndicatorText">Live Connection</span></div>
     <div class="header-right">
       <div class="mod-badge">Moderator</div>
       <div class="conn-status">
