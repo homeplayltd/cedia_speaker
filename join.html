@@ -421,13 +421,19 @@
 
     /* Live connection indicator */
     .live-indicator {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 16px;
-      background: rgba(34,197,94,0.08);
-      border: 1px solid rgba(34,197,94,0.3);
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(2,5,11,0.7);
+      border: 1px solid rgba(34,197,94,0.25);
       border-radius: 20px;
+      backdrop-filter: blur(6px);
       pointer-events: none;
       transition: border-color 0.4s, background 0.4s;
     }
@@ -438,8 +444,8 @@
     }
 
     .live-indicator-dot {
-      width: 9px;
-      height: 9px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--success);
       flex-shrink: 0;
@@ -460,9 +466,9 @@
 
     .live-indicator-text {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.78rem;
+      font-size: 0.65rem;
       font-weight: 600;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--success);
       transition: color 0.4s;
@@ -474,6 +480,11 @@
   </style>
 </head>
 <body>
+
+<div class="live-indicator" id="liveIndicator">
+  <div class="live-indicator-dot"></div>
+  <span class="live-indicator-text" id="liveIndicatorText">Live Connection</span>
+</div>
 <a class="home-btn" href="/">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
@@ -489,7 +500,7 @@
     <div class="logo">
       <img src="https://cedia.org/site/assets/files/1033/cedia_logo_tagline_white_email-1.png" alt="CEDIA">
     </div>
-      <div class="live-indicator" id="liveIndicator"><div class="live-indicator-dot"></div><span class="live-indicator-text" id="liveIndicatorText">Live Connection</span></div>
+      
   </div>
 
   <div class="topic-section">
