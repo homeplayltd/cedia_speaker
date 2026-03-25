@@ -46,3 +46,61 @@ create policy "Public read/write on queue"
   on queue for all to anon
   using (true)
   with check (true);
+
+-- ----------------------------------------------------------------
+-- RPC: clear_queue
+-- Deletes all rows from the queue with SECURITY DEFINER so it
+-- bypasses RLS. Called from the moderator panel.
+-- ----------------------------------------------------------------
+create or replace function clear_queue()
+returns void
+language sql
+security definer
+as $$
+  delete from queue;
+$$;
+
+-- Grant execute to anon role
+grant execute on function clear_queue() to anon;
+
+-- ----------------------------------------------------------------
+-- RPC: reset_meeting
+-- Clears the queue AND resets meeting_state in one call.
+-- ----------------------------------------------------------------
+create or replace function reset_meeting()
+returns void
+language sql
+security definer
+as $$
+  delete from queue;
+  update meeting_state set
+    topic = '',
+    current_speaker_name = null,
+    current_speaker_subject = null,
+    speaker_started_at = null,
+    updated_at = now()
+  where id = 1;
+$$;
+
+grant execute on function reset_meeting() to anon;
+
+-- ----------------------------------------------------------------
+-- RPC: set_topic
+-- Sets a new topic and clears the queue atomically.
+-- ----------------------------------------------------------------
+create or replace function set_topic(new_topic text)
+returns void
+language sql
+security definer
+as $$
+  delete from queue;
+  update meeting_state set
+    topic = new_topic,
+    current_speaker_name = null,
+    current_speaker_subject = null,
+    speaker_started_at = null,
+    updated_at = now()
+  where id = 1;
+$$;
+
+grant execute on function set_topic(text) to anon;

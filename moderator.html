@@ -606,23 +606,13 @@
     }
   }
 
-  // Delete all queue rows safely by fetching IDs first
+  // Clear queue via server-side RPC (bypasses RLS)
   async function clearQueue() {
-    const { data } = await client.from('queue').select('id');
-    if (!data || data.length === 0) return;
-    const ids = data.map(r => r.id);
-    await client.from('queue').delete().in('id', ids);
+    await client.rpc('clear_queue');
   }
 
   async function applyNewTopic(newTopic) {
-    await clearQueue();
-    await client.from('meeting_state').update({
-      topic: newTopic,
-      current_speaker_name: null,
-      current_speaker_subject: null,
-      speaker_started_at: null,
-      updated_at: new Date().toISOString()
-    }).eq('id', 1);
+    await client.rpc('set_topic', { new_topic: newTopic });
   }
 
   // ---- Next speaker ----
@@ -665,14 +655,7 @@
       'Reset Everything?',
       'This will clear the topic, remove all speakers from the queue, and end the current session. Are you sure?',
       async () => {
-        await clearQueue();
-        await client.from('meeting_state').update({
-          topic: '',
-          current_speaker_name: null,
-          current_speaker_subject: null,
-          speaker_started_at: null,
-          updated_at: new Date().toISOString()
-        }).eq('id', 1);
+        await client.rpc('reset_meeting');
       }
     );
   }
