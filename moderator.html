@@ -253,6 +253,73 @@
 
     .mod-timer-label.overtime { color: var(--danger); }
 
+    /* Timer setting */
+    .timer-setting {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--card-border);
+      flex-wrap: wrap;
+    }
+
+    .timer-setting-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-right: 4px;
+    }
+
+    .timer-preset {
+      border: 1px solid var(--card-border);
+      background: transparent;
+      color: var(--text-dim);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .timer-preset:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .timer-preset.active {
+      background: rgba(193,80,39,0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .timer-custom-input {
+      width: 60px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      color: var(--text);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .timer-custom-input:focus { border-color: var(--accent); }
+
+    .timer-unit {
+      font-size: 0.75rem;
+      color: var(--text-faint);
+      margin-left: -4px;
+    }
+
     /* Speaker actions */
     .speaker-actions {
       display: flex;
@@ -542,6 +609,16 @@
       <button class="btn btn-success" id="btnNext" onclick="nextSpeaker()">▶ Start Next Speaker</button>
       <button class="btn btn-danger" id="btnEnd" onclick="endSpeaker()" style="display:none">■ End Speaker</button>
     </div>
+
+    <div class="timer-setting">
+      <span class="timer-setting-label">Speaker time:</span>
+      <button class="timer-preset" onclick="setTimerPreset(60)">1 min</button>
+      <button class="timer-preset active" onclick="setTimerPreset(120)">2 min</button>
+      <button class="timer-preset" onclick="setTimerPreset(180)">3 min</button>
+      <button class="timer-preset" onclick="setTimerPreset(300)">5 min</button>
+      <input type="number" class="timer-custom-input" id="customTimerInput" min="10" max="600" placeholder="—" onchange="setCustomTimer()">
+      <span class="timer-unit">sec</span>
+    </div>
   </div>
 
   <!-- Queue -->
@@ -721,6 +798,31 @@
     if (error) alert('Error resetting meeting: ' + error.message);
   }
 
+  // ---- Timer setting ----
+  function setTimerPreset(seconds) {
+    CONFIG.SPEAKER_TIME_SECONDS = seconds;
+    document.getElementById('customTimerInput').value = '';
+    updateTimerPresetUI();
+    if (!state.speaker_started_at) stopTimer();
+  }
+
+  function setCustomTimer() {
+    const input = document.getElementById('customTimerInput');
+    const val = parseInt(input.value, 10);
+    if (!val || val < 10 || val > 600) { input.value = ''; return; }
+    CONFIG.SPEAKER_TIME_SECONDS = val;
+    updateTimerPresetUI();
+    if (!state.speaker_started_at) stopTimer();
+  }
+
+  function updateTimerPresetUI() {
+    const seconds = CONFIG.SPEAKER_TIME_SECONDS;
+    document.querySelectorAll('.timer-preset').forEach(btn => {
+      const presetVal = parseInt(btn.getAttribute('onclick').match(/\d+/)[0], 10);
+      btn.classList.toggle('active', presetVal === seconds);
+    });
+  }
+
   // ---- Timer ----
   function startTimer() {
     stopTimer();
@@ -730,7 +832,7 @@
 
   function stopTimer() {
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    document.getElementById('modTimerDisplay').textContent = '2:00';
+    document.getElementById('modTimerDisplay').textContent = formatTime(CONFIG.SPEAKER_TIME_SECONDS);
     document.getElementById('modTimerDisplay').className = 'mod-timer-display normal';
     document.getElementById('modTimerLabel').textContent = 'REMAINING';
     document.getElementById('modTimerLabel').className = 'mod-timer-label';
