@@ -85,21 +85,7 @@
       color: var(--accent);
     }
 
-    .conn-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      color: var(--text-dim);
-    }
 
-    .conn-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--success);
-      transition: background 0.3s;
-    }
-    .conn-dot.off { background: var(--danger); }
 
     /* ---- Sections ---- */
     .section {
@@ -401,8 +387,8 @@
     /* Home button */
     .home-btn {
       position: fixed;
-      top: 16px;
-      left: 16px;
+      bottom: 20px;
+      right: 20px;
       z-index: 100;
       display: flex;
       align-items: center;
@@ -429,9 +415,79 @@
       width: 13px; height: 13px;
       flex-shrink: 0;
     }
+
+    /* Live connection indicator */
+    .live-indicator {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      background: rgba(2,5,11,0.85);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+      transition: border-color 0.4s;
+    }
+
+    .live-indicator.disconnected {
+      border-color: rgba(239,68,68,0.4);
+    }
+
+    .live-indicator-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      flex-shrink: 0;
+      animation: live-pulse 2s ease-in-out infinite;
+      transition: background 0.4s;
+    }
+
+    .live-indicator.disconnected .live-indicator-dot {
+      background: var(--danger);
+      animation: none;
+    }
+
+    @keyframes live-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+      50%       { opacity: 0.85; transform: scale(1.15); box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+    }
+
+    .live-indicator-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--success);
+      transition: color 0.4s;
+    }
+
+    .live-indicator.disconnected .live-indicator-text {
+      color: var(--danger);
+    }
   </style>
 </head>
 <body>
+<div class="live-indicator" id="liveIndicator">
+  <div class="live-indicator-dot"></div>
+  <span class="live-indicator-text" id="liveIndicatorText">Live Connection</span>
+</div>
+
+<a class="home-btn" href="/">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+    <path d="M9 21V12h6v9"/>
+  </svg>
+  Home
+</a>
+
 
 <div class="layout">
 
@@ -731,11 +787,11 @@
       .on('postgres_changes', { event: '*', schema: 'public', table: 'meeting_state' }, () => loadState())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, () => loadQueue())
       .subscribe(status => {
-        const dot = document.getElementById('connDot');
-        const text = document.getElementById('connText');
+        const ind = document.getElementById('liveIndicator');
+        const txt = document.getElementById('liveIndicatorText');
         const connected = status === 'SUBSCRIBED';
-        dot.classList.toggle('off', !connected);
-        text.textContent = connected ? 'Live' : 'Reconnecting...';
+        ind.classList.toggle('disconnected', !connected);
+        txt.textContent = connected ? 'Live Connection' : 'Reconnecting...';
       });
   }
 
