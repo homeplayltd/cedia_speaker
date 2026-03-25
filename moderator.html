@@ -328,6 +328,33 @@
       flex-wrap: wrap;
     }
 
+    .btn-add-time {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-dim);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-add-time:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+      color: var(--text);
+    }
+
+    .btn-add-time:active { transform: scale(0.97); }
+
+    .btn-add-time .added-flash {
+      color: var(--success);
+    }
+
     /* ---- Queue ---- */
     .queue-toggle {
       display: flex;
@@ -660,6 +687,7 @@
     <div class="speaker-actions">
       <button class="btn btn-success" id="btnNext" onclick="nextSpeaker()">▶ Start Next Speaker</button>
       <button class="btn btn-danger" id="btnEnd" onclick="endSpeaker()" style="display:none">■ End Speaker</button>
+      <button class="btn-add-time" id="btnAddTime" onclick="addTime()" style="display:none">+30s</button>
     </div>
 
     <div class="timer-setting">
@@ -775,6 +803,7 @@
       details.style.display = 'flex';
       timerBlock.style.display = 'flex';
       btnEnd.style.display = 'inline-block';
+      document.getElementById('btnAddTime').style.display = 'inline-block';
       document.getElementById('modSpeakerName').textContent = state.current_speaker_name;
       document.getElementById('modSpeakerSubject').textContent = state.current_speaker_subject || '';
       startTimer();
@@ -783,6 +812,7 @@
       details.style.display = 'none';
       timerBlock.style.display = 'none';
       btnEnd.style.display = 'none';
+      document.getElementById('btnAddTime').style.display = 'none';
       stopTimer();
     }
   }
@@ -847,6 +877,25 @@
   async function endSpeaker() {
     const { error } = await client.rpc('end_speaker');
     if (error) alert('Error ending speaker: ' + error.message);
+  }
+
+  // ---- Add 30 seconds to current speaker ----
+  async function addTime() {
+    if (!state.speaker_started_at) return;
+    // Shift speaker_started_at back by 30s to give them more time
+    const current = new Date(state.speaker_started_at);
+    const shifted = new Date(current.getTime() + 30000);
+    // Don't allow shifting into the future
+    if (shifted.getTime() > Date.now()) return;
+    const { error } = await client.from('meeting_state')
+      .update({ speaker_started_at: shifted.toISOString() })
+      .eq('id', 1);
+    if (error) { alert('Error adding time: ' + error.message); return; }
+    state.speaker_started_at = shifted.toISOString();
+    // Flash feedback on button
+    const btn = document.getElementById('btnAddTime');
+    btn.innerHTML = '<span class="added-flash">✓ +30s</span>';
+    setTimeout(() => { btn.textContent = '+30s'; }, 800);
   }
 
   // ---- Remove from queue ----
