@@ -316,7 +316,7 @@
     /* The gun SVG wrapper - slides in from right */
     #gunWrap {
       position: absolute;
-      right: calc(clamp(90px, 12vw, 160px) * 0.52);
+      left: calc(clamp(90px, 12vw, 160px) * 1.05);
       bottom: calc(clamp(90px, 12vw, 160px) * 0.72);
       width: clamp(70px, 10vw, 130px);
       transform: translateX(300px);
@@ -921,7 +921,7 @@
     hideKitten();
     document.getElementById('stuartLabel').classList.remove('visible');
     showKittenFace('normal');
-    document.getElementById('gunWrap').style.transform  = 'translateX(300px)';
+    document.getElementById('gunWrap').style.transform  = 'translateX(350px)';
     document.getElementById('gunWrap').style.transition = 'none';
     document.getElementById('gunWrap').style.animation  = 'none';
     document.getElementById('muzzleFlash').style.display = 'none';
