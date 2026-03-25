@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <style>
@@ -587,6 +588,51 @@
       color: var(--text-faint);
       font-weight: 300;
     }
+
+    /* QR code join prompt */
+    .qr-join {
+      position: fixed;
+      bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 1.5vw);
+      left: 3vw;
+      display: flex;
+      align-items: center;
+      gap: 1vw;
+      z-index: 140;
+    }
+
+    .qr-join-code {
+      background: #fff;
+      border-radius: 0.6vw;
+      padding: 0.5vw;
+      line-height: 0;
+    }
+
+    .qr-join-code canvas, .qr-join-code img {
+      display: block;
+      width: clamp(56px, 5.5vw, 80px) !important;
+      height: clamp(56px, 5.5vw, 80px) !important;
+    }
+
+    .qr-join-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .qr-join-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.6rem, 0.9vw, 0.8rem);
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .qr-join-url {
+      font-family: 'DM Sans', sans-serif;
+      font-size: clamp(0.55rem, 0.8vw, 0.75rem);
+      color: var(--text-dim);
+    }
   </style>
 </head>
 <body>
@@ -634,6 +680,15 @@
   </div>
 
 </div><!-- end .screen -->
+
+<!-- QR code join prompt -->
+<div class="qr-join">
+  <div class="qr-join-code" id="displayQr"></div>
+  <div class="qr-join-text">
+    <div class="qr-join-label">Scan to Join</div>
+    <div class="qr-join-url">speaker-queue.homeplay.tv/join</div>
+  </div>
+</div>
 
 <!-- BOTTOM BAR -->
 <div class="bottom-bar">
@@ -816,6 +871,16 @@
 
 
 <script>
+  // Generate QR code for join page
+  new QRCode(document.getElementById('displayQr'), {
+    text: 'https://speaker-queue.homeplay.tv/join',
+    width: 200,
+    height: 200,
+    colorDark: '#02050B',
+    colorLight: '#FFFFFF',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
   const client = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
   let state = { topic: '', current_speaker_name: null, current_speaker_subject: null, speaker_started_at: null };
