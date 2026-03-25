@@ -22,7 +22,6 @@
       --card-border: rgba(255,255,255,0.09);
       --input-bg: rgba(255,255,255,0.07);
       --input-border: rgba(255,255,255,0.12);
-      --input-focus: rgba(193,80,39,0.5);
       --success: #22c55e;
       --danger: #ef4444;
     }
@@ -46,10 +45,9 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 0 0 env(safe-area-inset-bottom, 20px);
+      padding-bottom: env(safe-area-inset-bottom, 20px);
     }
 
-    /* ---- Header ---- */
     .header {
       padding: 28px 24px 20px;
       display: flex;
@@ -58,10 +56,7 @@
       border-bottom: 1px solid var(--card-border);
     }
 
-    .logo img {
-      height: 28px;
-      opacity: 0.9;
-    }
+    .logo img { height: 28px; opacity: 0.9; }
 
     .live-dot {
       display: flex;
@@ -87,10 +82,7 @@
       50% { opacity: 0.3; }
     }
 
-    /* ---- Topic pill ---- */
-    .topic-section {
-      padding: 18px 24px 0;
-    }
+    .topic-section { padding: 18px 24px 0; }
 
     .topic-label {
       font-family: 'Barlow Condensed', sans-serif;
@@ -123,7 +115,7 @@
       font-style: italic;
     }
 
-    /* ---- Forms ---- */
+    /* Form */
     .form-section {
       padding: 28px 24px;
       display: flex;
@@ -136,14 +128,9 @@
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 1.75rem;
       font-weight: 700;
-      letter-spacing: 0.01em;
     }
 
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .field { display: flex; flex-direction: column; gap: 8px; }
 
     .field label {
       font-size: 0.8rem;
@@ -166,20 +153,14 @@
       -webkit-appearance: none;
     }
 
-    .field input::placeholder, .field textarea::placeholder {
-      color: var(--text-faint);
-    }
+    .field input::placeholder, .field textarea::placeholder { color: var(--text-faint); }
 
     .field input:focus, .field textarea:focus {
       border-color: var(--accent);
       background: rgba(255,255,255,0.09);
     }
 
-    .field textarea {
-      resize: none;
-      height: 90px;
-      line-height: 1.5;
-    }
+    .field textarea { resize: none; height: 90px; line-height: 1.5; }
 
     .char-count {
       font-size: 0.75rem;
@@ -188,7 +169,6 @@
       margin-top: -4px;
     }
 
-    /* ---- Submit button ---- */
     .btn-join {
       width: 100%;
       padding: 17px;
@@ -208,41 +188,41 @@
 
     .btn-join:hover { background: #D4613A; }
     .btn-join:active { transform: scale(0.98); }
-    .btn-join:disabled {
-      background: rgba(193,80,39,0.35);
-      cursor: not-allowed;
-    }
+    .btn-join:disabled { background: rgba(193,80,39,0.35); cursor: not-allowed; }
 
-    /* ---- Confirmation view ---- */
+    /* Confirmation */
     .confirmation {
       display: none;
-      padding: 40px 24px;
+      padding: 36px 24px 28px;
       flex-direction: column;
       align-items: center;
-      gap: 28px;
+      gap: 22px;
       text-align: center;
       flex: 1;
     }
 
     .confirmation.active { display: flex; }
 
-    .check-icon {
+    .conf-icon {
       width: 72px; height: 72px;
       border-radius: 50%;
       background: rgba(34,197,94,0.15);
       border: 2px solid rgba(34,197,94,0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: background 0.4s, border-color 0.4s;
+      font-size: 2rem;
+    }
+
+    .conf-icon.speaking {
+      background: rgba(34,197,94,0.2);
+      border-color: rgba(34,197,94,0.6);
     }
 
     @keyframes pop {
       from { transform: scale(0); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
-
-    .check-icon svg { width: 36px; height: 36px; }
 
     .conf-title {
       font-family: 'Barlow Condensed', sans-serif;
@@ -254,20 +234,42 @@
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 20px 28px;
+      padding: 22px 28px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       width: 100%;
+      transition: background 0.4s, border-color 0.4s;
+    }
+
+    .position-badge.speaking {
+      background: rgba(34,197,94,0.08);
+      border-color: rgba(34,197,94,0.3);
+    }
+
+    @keyframes flash-up {
+      0% { background: rgba(193,80,39,0.2); }
+      100% { background: var(--card); }
     }
 
     .position-number {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 4rem;
+      font-size: 5rem;
       font-weight: 800;
       color: var(--accent);
       line-height: 1;
+      transition: color 0.4s, font-size 0.3s;
+    }
+
+    .position-number.next {
+      color: var(--success);
+    }
+
+    .position-number.speaking {
+      color: var(--success);
+      font-size: 1.6rem;
+      line-height: 1.4;
     }
 
     .position-label {
@@ -278,17 +280,25 @@
       color: var(--text-dim);
     }
 
-    .conf-name {
-      font-size: 0.95rem;
+    .conf-detail {
+      font-size: 0.88rem;
       color: var(--text-dim);
       line-height: 1.5;
     }
 
-    .conf-name strong { color: var(--text); }
+    .conf-detail strong { color: var(--text); }
+
+    .conf-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      margin-top: auto;
+    }
 
     .btn-another {
       width: 100%;
-      padding: 17px;
+      padding: 15px;
       background: transparent;
       border: 1px solid var(--card-border);
       border-radius: 14px;
@@ -300,12 +310,83 @@
       text-transform: uppercase;
       cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
-      margin-top: auto;
     }
 
     .btn-another:hover { border-color: var(--accent); color: var(--text); }
 
-    /* Error toast */
+    .btn-remove-me {
+      width: 100%;
+      padding: 15px;
+      background: transparent;
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 14px;
+      color: rgba(239,68,68,0.6);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-remove-me:hover {
+      background: rgba(239,68,68,0.07);
+      border-color: rgba(239,68,68,0.5);
+      color: var(--danger);
+    }
+
+    /* Removed view */
+    .removed-view {
+      display: none;
+      padding: 48px 24px;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      text-align: center;
+      flex: 1;
+    }
+
+    .removed-view.active { display: flex; }
+
+    .removed-icon {
+      font-size: 3rem;
+      margin-bottom: 4px;
+    }
+
+    .removed-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+
+    .removed-sub {
+      font-size: 0.88rem;
+      color: var(--text-faint);
+      line-height: 1.6;
+      max-width: 280px;
+    }
+
+    .btn-rejoin {
+      margin-top: 12px;
+      width: 100%;
+      padding: 17px;
+      background: var(--accent);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-rejoin:hover { background: #D4613A; }
+
     .toast {
       position: fixed;
       bottom: 28px;
@@ -322,14 +403,14 @@
       transition: transform 0.3s ease;
       z-index: 100;
     }
+
     .toast.show { transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
 
-<div class="page" id="page">
+<div class="page">
 
-  <!-- Header -->
   <div class="header">
     <div class="logo">
       <img src="https://cedia.org/site/assets/files/1033/cedia_logo_tagline_white_email-1.png" alt="CEDIA">
@@ -337,13 +418,12 @@
     <div class="live-dot">Live</div>
   </div>
 
-  <!-- Topic -->
   <div class="topic-section">
     <div class="topic-label">Current Topic</div>
     <div class="topic-pill no-topic" id="topicPill">Waiting for moderator...</div>
   </div>
 
-  <!-- Form -->
+  <!-- Join form -->
   <div class="form-section" id="formSection">
     <div class="form-title">Request to Speak</div>
 
@@ -361,24 +441,33 @@
     <button class="btn-join" id="joinBtn" onclick="joinQueue()">Join Queue</button>
   </div>
 
-  <!-- Confirmation -->
+  <!-- In-queue confirmation with live position -->
   <div class="confirmation" id="confirmation">
-    <div class="check-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-    </div>
 
-    <div class="conf-title">You're in the queue</div>
+    <div class="conf-icon" id="confIcon">✅</div>
 
-    <div class="position-badge">
+    <div class="conf-title" id="confTitle">You're in the queue</div>
+
+    <div class="position-badge" id="positionBadge">
       <div class="position-number" id="positionNumber">—</div>
-      <div class="position-label">in the queue</div>
+      <div class="position-label" id="positionLabel">in the queue</div>
     </div>
 
-    <div class="conf-name" id="confName"></div>
+    <div class="conf-detail" id="confDetail"></div>
 
-    <button class="btn-another" onclick="resetForm()">Join Again for New Topic</button>
+    <div class="conf-buttons">
+      <button class="btn-another" onclick="resetAndRejoin()">Join Again for New Topic</button>
+      <button class="btn-remove-me" id="btnRemoveMe" onclick="removeMe()">Remove Me From Queue</button>
+    </div>
+
+  </div>
+
+  <!-- Removed / withdrawn view -->
+  <div class="removed-view" id="removedView">
+    <div class="removed-icon" id="removedIcon">👋</div>
+    <div class="removed-title" id="removedTitle">You've left the queue</div>
+    <div class="removed-sub" id="removedSub">You're no longer in the speaker queue.</div>
+    <button class="btn-rejoin" onclick="resetAndRejoin()">Rejoin Queue</button>
   </div>
 
 </div>
@@ -388,20 +477,22 @@
 <script>
   const client = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
-  let currentTopic = '';
-  let submittedName = '';
+  let myRowId   = null;
+  let myName    = '';
+  let mySubject = '';
+  let isInQueue = false;
+  let lastPos   = null;
 
-  // ---- Load current topic ----
+  // ---- Topic ----
   async function loadTopic() {
     const { data } = await client.from('meeting_state').select('topic').eq('id', 1).single();
-    if (data) updateTopic(data.topic);
+    if (data) renderTopic(data.topic);
   }
 
-  function updateTopic(topic) {
-    currentTopic = topic || '';
+  function renderTopic(topic) {
     const pill = document.getElementById('topicPill');
-    if (currentTopic.trim()) {
-      pill.textContent = currentTopic;
+    if (topic && topic.trim()) {
+      pill.textContent = topic;
       pill.classList.remove('no-topic');
     } else {
       pill.textContent = 'Waiting for moderator...';
@@ -409,55 +500,166 @@
     }
   }
 
-  // ---- Queue count for position display ----
-  async function getQueueCount() {
-    const { count } = await client.from('queue').select('*', { count: 'exact', head: true });
-    return count || 0;
-  }
-
   // ---- Join queue ----
   async function joinQueue() {
-    const name = document.getElementById('nameInput').value.trim();
+    const name    = document.getElementById('nameInput').value.trim();
     const subject = document.getElementById('subjectInput').value.trim();
 
-    if (!name) { showToast('Please enter your name'); return; }
+    if (!name)    { showToast('Please enter your name'); return; }
     if (!subject) { showToast('Please add a brief subject'); return; }
 
     const btn = document.getElementById('joinBtn');
     btn.disabled = true;
     btn.textContent = 'Joining...';
 
-    const { error } = await client.from('queue').insert({ name, subject });
+    const { data, error } = await client
+      .from('queue')
+      .insert({ name, subject })
+      .select()
+      .single();
 
-    if (error) {
+    if (error || !data) {
       showToast('Something went wrong. Please try again.');
       btn.disabled = false;
       btn.textContent = 'Join Queue';
       return;
     }
 
-    submittedName = name;
+    myRowId   = data.id;
+    myName    = name;
+    mySubject = subject;
+    isInQueue = true;
+    lastPos   = null;
 
-    // Get position
-    const pos = await getQueueCount();
+    document.getElementById('confDetail').innerHTML =
+      `<strong>${esc(name)}</strong> &mdash; ${esc(subject)}`;
 
-    // Show confirmation
-    document.getElementById('formSection').style.display = 'none';
-    const conf = document.getElementById('confirmation');
-    conf.classList.add('active');
-    document.getElementById('positionNumber').textContent = pos;
-    document.getElementById('confName').innerHTML =
-      `<strong>${esc(name)}</strong><br>Re: ${esc(subject)}`;
+    showView('confirmation');
+    refreshPosition();
   }
 
-  // ---- Reset form ----
-  function resetForm() {
-    document.getElementById('subjectInput').value = '';
+  // ---- Live position refresh ----
+  async function refreshPosition() {
+    if (!myRowId) return;
+
+    const { data: queue } = await client
+      .from('queue')
+      .select('id')
+      .order('joined_at', { ascending: true });
+
+    if (!queue) return;
+
+    const idx = queue.findIndex(r => r.id === myRowId);
+
+    if (idx === -1) {
+      // I'm not in the queue anymore
+      const { data: state } = await client
+        .from('meeting_state')
+        .select('current_speaker_name')
+        .eq('id', 1)
+        .single();
+
+      if (state && state.current_speaker_name === myName) {
+        setSpeakingNow();
+      } else if (isInQueue) {
+        // Moderator removed me or topic was reset
+        isInQueue = false;
+        showRemovedView(false);
+      }
+      return;
+    }
+
+    isInQueue = true;
+    const pos = idx + 1;
+
+    // Flash if position improved
+    if (lastPos !== null && pos < lastPos) {
+      const badge = document.getElementById('positionBadge');
+      badge.style.animation = 'none';
+      void badge.offsetWidth;
+      badge.style.animation = 'flash-up 0.5s ease-out';
+    }
+    lastPos = pos;
+
+    const numEl   = document.getElementById('positionNumber');
+    const labelEl = document.getElementById('positionLabel');
+    const title   = document.getElementById('confTitle');
+    const icon    = document.getElementById('confIcon');
+    const badge   = document.getElementById('positionBadge');
+
+    // Reset speaking styles
+    badge.classList.remove('speaking');
+    icon.classList.remove('speaking');
+    numEl.className = pos === 1 ? 'position-number next' : 'position-number';
+
+    title.textContent  = "You're in the queue";
+    icon.textContent   = '✅';
+    numEl.textContent  = pos;
+    labelEl.textContent = pos === 1 ? "You're next!" : 'in the queue';
+
+    document.getElementById('btnRemoveMe').style.display = 'block';
+  }
+
+  // ---- Speaking now ----
+  function setSpeakingNow() {
+    const numEl   = document.getElementById('positionNumber');
+    const labelEl = document.getElementById('positionLabel');
+    const badge   = document.getElementById('positionBadge');
+    const icon    = document.getElementById('confIcon');
+    const title   = document.getElementById('confTitle');
+
+    badge.classList.add('speaking');
+    icon.classList.add('speaking');
+    numEl.className    = 'position-number speaking';
+    title.textContent  = "It's your turn!";
+    icon.textContent   = '🎙';
+    numEl.textContent  = "You're speaking now";
+    labelEl.textContent = '';
+    document.getElementById('btnRemoveMe').style.display = 'none';
+  }
+
+  // ---- Remove myself ----
+  async function removeMe() {
+    if (!myRowId) return;
+    const { error } = await client.from('queue').delete().eq('id', myRowId);
+    if (error) { showToast('Something went wrong. Try again.'); return; }
+    isInQueue = false;
+    myRowId   = null;
+    showRemovedView(true);
+  }
+
+  // ---- Show removed view ----
+  function showRemovedView(selfRemoved) {
+    showView('removed');
+    document.getElementById('removedIcon').textContent  = selfRemoved ? '👋' : '🔔';
+    document.getElementById('removedTitle').textContent = selfRemoved
+      ? "You've left the queue"
+      : "You've been removed";
+    document.getElementById('removedSub').textContent   = selfRemoved
+      ? "You removed yourself from the speaker queue."
+      : "The moderator has moved on or removed you from the queue.";
+  }
+
+  // ---- Reset / rejoin ----
+  function resetAndRejoin() {
+    myRowId   = null;
+    isInQueue = false;
+    lastPos   = null;
+    document.getElementById('subjectInput').value    = '';
     document.getElementById('charCount').textContent = '0';
-    document.getElementById('joinBtn').disabled = false;
-    document.getElementById('joinBtn').textContent = 'Join Queue';
-    document.getElementById('formSection').style.display = 'flex';
-    document.getElementById('confirmation').classList.remove('active');
+    document.getElementById('joinBtn').disabled      = false;
+    document.getElementById('joinBtn').textContent   = 'Join Queue';
+    document.getElementById('positionNumber').textContent = '—';
+    document.getElementById('positionNumber').className   = 'position-number';
+    document.getElementById('positionBadge').classList.remove('speaking');
+    showView('form');
+  }
+
+  // ---- View switcher ----
+  function showView(view) {
+    document.getElementById('formSection').style.display   = view === 'form'         ? 'flex'  : 'none';
+    document.getElementById('confirmation').classList.toggle('active', view === 'confirmation');
+    document.getElementById('removedView').classList.toggle('active',  view === 'removed');
   }
 
   // ---- Char count ----
@@ -474,19 +676,29 @@
   }
 
   function esc(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
   }
 
-  // ---- Realtime: update topic live ----
+  // ---- Realtime ----
   client.channel('join-channel')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'meeting_state' }, payload => {
-      updateTopic(payload.new.topic);
+      renderTopic(payload.new.topic);
+      if (isInQueue || myRowId) refreshPosition();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, () => {
+      if (isInQueue || myRowId) refreshPosition();
     })
     .subscribe();
 
-  // ---- Page visibility ----
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) loadTopic();
+    if (!document.hidden) {
+      loadTopic();
+      if (isInQueue || myRowId) refreshPosition();
+    }
   });
 
   loadTopic();
