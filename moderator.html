@@ -681,6 +681,12 @@
 
   // ---- Render state ----
   function renderState() {
+    // Sync timer setting from database
+    if (state.speaker_time_seconds) {
+      CONFIG.SPEAKER_TIME_SECONDS = state.speaker_time_seconds;
+      updateTimerPresetUI();
+    }
+
     // Topic
     const topicEl = document.getElementById('topicCurrent');
     const topicInput = document.getElementById('topicInput');
@@ -799,20 +805,22 @@
   }
 
   // ---- Timer setting ----
-  function setTimerPreset(seconds) {
+  async function setTimerPreset(seconds) {
     CONFIG.SPEAKER_TIME_SECONDS = seconds;
     document.getElementById('customTimerInput').value = '';
     updateTimerPresetUI();
     if (!state.speaker_started_at) stopTimer();
+    await client.from('meeting_state').update({ speaker_time_seconds: seconds }).eq('id', 1);
   }
 
-  function setCustomTimer() {
+  async function setCustomTimer() {
     const input = document.getElementById('customTimerInput');
     const val = parseInt(input.value, 10);
     if (!val || val < 10 || val > 600) { input.value = ''; return; }
     CONFIG.SPEAKER_TIME_SECONDS = val;
     updateTimerPresetUI();
     if (!state.speaker_started_at) stopTimer();
+    await client.from('meeting_state').update({ speaker_time_seconds: val }).eq('id', 1);
   }
 
   function updateTimerPresetUI() {

@@ -903,6 +903,11 @@
 
   // ---- Render state ----
   function renderState() {
+    // Sync timer setting from database
+    if (state.speaker_time_seconds) {
+      CONFIG.SPEAKER_TIME_SECONDS = state.speaker_time_seconds;
+    }
+
     const topicEl = document.getElementById('topicText');
     if (state.topic && state.topic.trim()) {
       topicEl.textContent = state.topic;
@@ -975,7 +980,7 @@
 
   function stopTimer() {
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    document.getElementById('timerDisplay').textContent = '2:00';
+    document.getElementById('timerDisplay').textContent = formatTime(CONFIG.SPEAKER_TIME_SECONDS);
     document.getElementById('timerDisplay').className = 'timer-display normal';
     document.getElementById('timerLabel').textContent = 'REMAINING';
     document.getElementById('timerLabel').className = 'timer-label normal';
