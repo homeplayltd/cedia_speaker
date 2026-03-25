@@ -47,11 +47,12 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+      padding: 0 0 calc(52px + env(safe-area-inset-bottom, 0px));
     }
 
     .header {
-      padding: 28px 24px 20px;
+      padding: 24px 24px 20px;
+      margin: 0 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -63,7 +64,7 @@
       50% { opacity: 0.3; }
     }
 
-    .topic-section { padding: 24px 24px 0; }
+    .topic-section { padding: 20px 24px 0; }
 
     .topic-label {
       font-family: 'Barlow Condensed', sans-serif;
@@ -98,7 +99,7 @@
 
     /* Form */
     .form-section {
-      padding: 28px 24px;
+      padding: 24px 24px;
       display: flex;
       flex-direction: column;
       gap: 20px;

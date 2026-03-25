@@ -149,26 +149,8 @@
       line-height: 1.5;
     }
 
-    .print-btn {
-      margin-top: 8px;
-      padding: 12px 28px;
-      background: var(--accent);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
 
-    .print-btn:hover { background: #D4613A; }
 
-    @media print {
-      body { background: white !important; }
       body::before { display: none; }
       .card {
         background: white;
@@ -177,39 +159,10 @@
       }
       .card-heading, .card-title { color: #C15027 !important; }
       .card-subtitle, .step-text, .url-display { color: #555 !important; }
-      .print-btn { display: none; }
       .qr-wrapper { border: 1px solid #ddd; }
       .logo img { filter: invert(1); }
     }
 
-    /* Home button */
-    .home-btn {
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 8px 14px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      color: rgba(255,255,255,0.55);
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      text-decoration: none;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
-    }
-    .home-btn:hover {
-      background: rgba(193,80,39,0.15);
-      border-color: rgba(193,80,39,0.35);
-      color: #FFFFFF;
-    }
-    .home-btn svg {
-      width: 13px; height: 13px;
-      flex-shrink: 0;
-    }
 
 
 
@@ -221,21 +174,6 @@
 
 
 
-    /* ---- BOTTOM BAR ---- */
-    .bottom-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0; right: 0;
-      height: 52px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      background: rgba(2,5,11,0.92);
-      border-top: 1px solid rgba(255,255,255,0.07);
-      backdrop-filter: blur(8px);
-      z-index: 150;
-    }
   </style>
 </head>
 <body>
@@ -273,7 +211,7 @@
     </div>
   </div>
 
-  <button class="print-btn" onclick="window.print()">Print This Page</button>
+  <a href="/" style="display:inline-block; padding:14px 36px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:rgba(255,255,255,0.7); font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; text-decoration:none; margin-top:8px; transition:all 0.2s;">&#8962; Home</a>
 </div>
 
 <script>
@@ -291,17 +229,6 @@
     correctLevel: QRCode.CorrectLevel.M
   });
 </script>
-
-<div class="bottom-bar" style="justify-content:center;">
-  <div style="display:flex; justify-content:center;">
-    <a class="home-btn" href="/">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
-        <path d="M9 21V12h6v9"/>
-      </svg>
-      Home
-    </a>
-  </div>
 </div>
 </body>
 </html>
