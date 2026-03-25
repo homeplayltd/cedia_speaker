@@ -104,3 +104,62 @@ as $$
 $$;
 
 grant execute on function set_topic(text) to anon;
+
+-- ----------------------------------------------------------------
+-- RPC: next_speaker  
+-- Removes first queue entry and sets them as current speaker.
+-- ----------------------------------------------------------------
+create or replace function next_speaker()
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  v_next record;
+begin
+  select * into v_next from queue order by joined_at asc limit 1;
+  if v_next is null then return; end if;
+  delete from queue where id = v_next.id;
+  update meeting_state set
+    current_speaker_name = v_next.name,
+    current_speaker_subject = v_next.subject,
+    speaker_started_at = now(),
+    updated_at = now()
+  where id = 1;
+end;
+$$;
+
+grant execute on function next_speaker() to anon;
+
+-- ----------------------------------------------------------------
+-- RPC: end_speaker
+-- Clears the current speaker without advancing.
+-- ----------------------------------------------------------------
+create or replace function end_speaker()
+returns void
+language sql
+security definer
+as $$
+  update meeting_state set
+    current_speaker_name = null,
+    current_speaker_subject = null,
+    speaker_started_at = null,
+    updated_at = now()
+  where id = 1;
+$$;
+
+grant execute on function end_speaker() to anon;
+
+-- ----------------------------------------------------------------
+-- RPC: remove_from_queue
+-- Removes a single speaker by UUID.
+-- ----------------------------------------------------------------
+create or replace function remove_from_queue(row_id uuid)
+returns void
+language sql
+security definer
+as $$
+  delete from queue where id = row_id;
+$$;
+
+grant execute on function remove_from_queue(uuid) to anon;

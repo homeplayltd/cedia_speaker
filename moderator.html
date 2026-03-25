@@ -589,75 +589,48 @@
     if (!newTopic) return;
 
     const hasCurrent = state.topic || state.current_speaker_name || queueItems.length;
+    if (hasCurrent && !confirm('Setting a new topic will clear the current queue. Continue?')) return;
 
-    if (hasCurrent) {
-      showModal(
-        'Change Topic?',
-        `Setting the topic to "<strong>${esc(newTopic)}</strong>" will clear the current queue and end the active speaker. This cannot be undone.`,
-        async () => {
-          await applyNewTopic(newTopic);
-          input.value = '';
-          document.getElementById('topicWarn').style.display = 'none';
-        }
-      );
+    const btn = document.querySelector('button[onclick="setTopic()"]');
+    btn.disabled = true;
+    btn.textContent = 'Setting...';
+
+    const { error } = await client.rpc('set_topic', { new_topic: newTopic });
+    if (error) {
+      alert('Error setting topic: ' + error.message);
     } else {
-      await applyNewTopic(newTopic);
       input.value = '';
+      document.getElementById('topicWarn').style.display = 'none';
     }
-  }
-
-  // Clear queue via server-side RPC (bypasses RLS)
-  async function clearQueue() {
-    await client.rpc('clear_queue');
-  }
-
-  async function applyNewTopic(newTopic) {
-    await client.rpc('set_topic', { new_topic: newTopic });
+    btn.disabled = false;
+    btn.textContent = 'Set Topic';
   }
 
   // ---- Next speaker ----
   async function nextSpeaker() {
     if (!queueItems.length) return;
-    const next = queueItems[0];
-
-    // End current speaker, start next
-    await client.from('queue').delete().eq('id', next.id);
-    await client.from('meeting_state').update({
-      current_speaker_name: next.name,
-      current_speaker_subject: next.subject,
-      speaker_started_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }).eq('id', 1);
+    const { error } = await client.rpc('next_speaker');
+    if (error) alert('Error advancing speaker: ' + error.message);
   }
 
   // ---- End speaker (without starting next) ----
   async function endSpeaker() {
-    await client.from('meeting_state').update({
-      current_speaker_name: null,
-      current_speaker_subject: null,
-      speaker_started_at: null,
-      updated_at: new Date().toISOString()
-    }).eq('id', 1);
+    const { error } = await client.rpc('end_speaker');
+    if (error) alert('Error ending speaker: ' + error.message);
   }
 
   // ---- Remove from queue ----
   async function removeFromQueue(id, name) {
-    showModal(
-      'Remove from queue?',
-      `Remove <strong>${esc(name)}</strong> from the queue?`,
-      async () => { await client.from('queue').delete().eq('id', id); }
-    );
+    if (!confirm('Remove ' + name + ' from the queue?')) return;
+    const { error } = await client.rpc('remove_from_queue', { row_id: id });
+    if (error) alert('Error removing speaker: ' + error.message);
   }
 
   // ---- Reset ----
   async function showResetModal() {
-    showModal(
-      'Reset Everything?',
-      'This will clear the topic, remove all speakers from the queue, and end the current session. Are you sure?',
-      async () => {
-        await client.rpc('reset_meeting');
-      }
-    );
+    if (!confirm('Reset everything? This will clear the topic, queue, and current speaker.')) return;
+    const { error } = await client.rpc('reset_meeting');
+    if (error) alert('Error resetting meeting: ' + error.message);
   }
 
   // ---- Timer ----
