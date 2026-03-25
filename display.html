@@ -975,6 +975,10 @@
 
   function stopTimer() {
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    document.getElementById('timerDisplay').textContent = '2:00';
+    document.getElementById('timerDisplay').className = 'timer-display normal';
+    document.getElementById('timerLabel').textContent = 'REMAINING';
+    document.getElementById('timerLabel').className = 'timer-label normal';
   }
 
   function updateTimer() {
