@@ -449,6 +449,14 @@
       0%, 100% { transform: translateY(0); }
       50%       { transform: translateY(6px); }
     }
+
+    @keyframes gun-hover {
+      0%   { transform: translateX(0px) rotate(0deg); }
+      25%  { transform: translateX(3px) rotate(1deg); }
+      50%  { transform: translateX(0px) rotate(-1deg); }
+      75%  { transform: translateX(-3px) rotate(0.5deg); }
+      100% { transform: translateX(0px) rotate(0deg); }
+    }
   </style>
 </head>
 <body>
@@ -826,13 +834,10 @@
       stuartEl.classList.remove('visible');
     }
 
-    // Gun slides in: at 30s it's far right, at 1s it's right at head
-    // progress 0 = 30s remaining, progress 1 = 1s remaining
-    const progress  = (30 - remaining) / 29; // 0..1
-    const maxOffset = 280; // px off screen to the right
-    const offset    = maxOffset * (1 - progress);
-    gun.style.transform  = `translateX(${offset}px)`;
-    gun.style.transition = 'transform 0.8s ease-out';
+    // Gun sits at a fixed position pointing at the cat and hovers gently
+    gun.style.transform  = 'translateX(0px)';
+    gun.style.transition = 'none';
+    gun.style.animation  = 'gun-hover 1.8s ease-in-out infinite';
 
     hasFired = false;
   }
@@ -841,10 +846,11 @@
     const scene = document.getElementById('kittenScene');
     scene.classList.add('visible');
 
-    // Gun flush at head
+    // Gun stays fixed, stop hover animation when fired
     const gun = document.getElementById('gunWrap');
     gun.style.transform  = 'translateX(0px)';
     gun.style.transition = 'none';
+    gun.style.animation  = 'none';
 
     if (!hasFired) {
       fireGun();
@@ -917,6 +923,7 @@
     showKittenFace('normal');
     document.getElementById('gunWrap').style.transform  = 'translateX(300px)';
     document.getElementById('gunWrap').style.transition = 'none';
+    document.getElementById('gunWrap').style.animation  = 'none';
     document.getElementById('muzzleFlash').style.display = 'none';
     document.getElementById('smokePuffs').style.display  = 'none';
     const bang = document.getElementById('bangEl');
