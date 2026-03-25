@@ -633,6 +633,37 @@
       font-size: clamp(0.55rem, 0.8vw, 0.75rem);
       color: var(--text-dim);
     }
+
+    /* Queue closed indicator */
+    .queue-closed-banner {
+      display: none;
+      position: fixed;
+      bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 1.5vw);
+      left: 3vw;
+      align-items: center;
+      gap: 0.8vw;
+      z-index: 140;
+      padding: 0.6vw 1.2vw;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 0.6vw;
+    }
+
+    .queue-closed-banner.visible { display: flex; }
+
+    .queue-closed-icon {
+      font-size: clamp(1rem, 1.5vw, 1.4rem);
+      line-height: 1;
+    }
+
+    .queue-closed-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.7rem, 1.1vw, 1rem);
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--danger);
+    }
   </style>
 </head>
 <body>
@@ -681,13 +712,19 @@
 
 </div><!-- end .screen -->
 
-<!-- QR code join prompt -->
-<div class="qr-join">
+<!-- QR code join prompt (hidden when queue closed) -->
+<div class="qr-join" id="qrJoin">
   <div class="qr-join-code" id="displayQr"></div>
   <div class="qr-join-text">
     <div class="qr-join-label">Scan to Join</div>
     <div class="qr-join-url">speaker-queue.homeplay.tv/join</div>
   </div>
+</div>
+
+<!-- Queue closed banner (shown when queue closed) -->
+<div class="queue-closed-banner" id="queueClosedBanner">
+  <span class="queue-closed-icon">🔒</span>
+  <span class="queue-closed-text">Queue Closed</span>
 </div>
 
 <!-- BOTTOM BAR -->
@@ -907,6 +944,11 @@
     if (state.speaker_time_seconds) {
       CONFIG.SPEAKER_TIME_SECONDS = state.speaker_time_seconds;
     }
+
+    // Queue open/closed
+    const queueOpen = state.queue_open !== false;
+    document.getElementById('qrJoin').style.display = queueOpen ? 'flex' : 'none';
+    document.getElementById('queueClosedBanner').classList.toggle('visible', !queueOpen);
 
     const topicEl = document.getElementById('topicText');
     if (state.topic && state.topic.trim()) {

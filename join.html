@@ -97,6 +97,42 @@
       font-style: italic;
     }
 
+    /* Queue closed overlay */
+    .queue-closed-overlay {
+      display: none;
+      padding: 48px 24px;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      text-align: center;
+      flex: 1;
+    }
+
+    .queue-closed-overlay.active { display: flex; }
+
+    .queue-closed-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(239,68,68,0.1);
+      border: 2px solid rgba(239,68,68,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+    }
+
+    .queue-closed-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .queue-closed-sub {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      max-width: 300px;
+    }
+
     /* Form */
     .form-section {
       padding: 24px 24px;
@@ -504,6 +540,13 @@
     <div class="topic-pill no-topic" id="topicPill">Waiting for moderator...</div>
   </div>
 
+  <!-- Queue closed message -->
+  <div class="queue-closed-overlay" id="queueClosedOverlay">
+    <div class="queue-closed-icon">🔒</div>
+    <div class="queue-closed-title">Queue is Closed</div>
+    <div class="queue-closed-sub">The moderator has closed the speaker queue. No further comments can be added at this time. Please wait for the next topic.</div>
+  </div>
+
   <!-- Join form -->
   <div class="form-section" id="formSection">
     <div class="form-title">Request to Speak</div>
@@ -563,11 +606,15 @@
   let mySubject = '';
   let isInQueue = false;
   let lastPos   = null;
+  let queueOpen = true;
 
-  // ---- Topic ----
-  async function loadTopic() {
-    const { data } = await client.from('meeting_state').select('topic').eq('id', 1).single();
-    if (data) renderTopic(data.topic);
+  // ---- State ----
+  async function loadState() {
+    const { data } = await client.from('meeting_state').select('topic, queue_open').eq('id', 1).single();
+    if (data) {
+      renderTopic(data.topic);
+      updateQueueOpen(data.queue_open);
+    }
   }
 
   function renderTopic(topic) {
@@ -581,8 +628,40 @@
     }
   }
 
+  // ---- Queue open/close ----
+  function updateQueueOpen(open) {
+    queueOpen = open !== false;
+    const overlay = document.getElementById('queueClosedOverlay');
+    const confirmation = document.getElementById('confirmation');
+    const removedView = document.getElementById('removedView');
+    const inConfirmation = confirmation.classList.contains('active');
+    const inRemoved = removedView.classList.contains('active');
+
+    if (!queueOpen && !isInQueue && !inConfirmation && !inRemoved) {
+      // Show closed overlay, hide form — only when on the form view
+      overlay.classList.add('active');
+      document.getElementById('formSection').style.display = 'none';
+    } else if (queueOpen) {
+      // Queue reopened — hide overlay
+      overlay.classList.remove('active');
+      // Restore form if not in another view
+      if (!isInQueue && !inConfirmation && !inRemoved) {
+        document.getElementById('formSection').style.display = 'flex';
+      }
+    }
+
+    // Disable rejoin buttons when queue is closed
+    document.querySelectorAll('.btn-another, .btn-rejoin').forEach(btn => {
+      btn.disabled = !queueOpen;
+      btn.style.opacity = queueOpen ? '' : '0.4';
+      btn.style.cursor = queueOpen ? '' : 'not-allowed';
+    });
+  }
+
   // ---- Join queue ----
   async function joinQueue() {
+    if (!queueOpen) { showToast('The queue is currently closed'); return; }
+
     const name    = document.getElementById('nameInput').value.trim();
     const subject = document.getElementById('subjectInput').value.trim();
 
@@ -723,6 +802,7 @@
 
   // ---- Reset / rejoin ----
   function resetAndRejoin() {
+    if (!queueOpen) { showToast('The queue is currently closed'); return; }
     myRowId   = null;
     isInQueue = false;
     lastPos   = null;
@@ -733,6 +813,7 @@
     document.getElementById('positionNumber').textContent = '—';
     document.getElementById('positionNumber').className   = 'position-number';
     document.getElementById('positionBadge').classList.remove('speaking');
+    document.getElementById('queueClosedOverlay').classList.remove('active');
     showView('form');
   }
 
@@ -768,6 +849,7 @@
   client.channel('join-channel')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'meeting_state' }, payload => {
       renderTopic(payload.new.topic);
+      updateQueueOpen(payload.new.queue_open);
       if (isInQueue || myRowId) refreshPosition();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, () => {
@@ -783,12 +865,12 @@
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-      loadTopic();
+      loadState();
       if (isInQueue || myRowId) refreshPosition();
     }
   });
 
-  loadTopic();
+  loadState();
 </script>
 
 <div class="bottom-bar">
