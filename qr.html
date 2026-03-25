@@ -150,7 +150,7 @@
     }
 
 
-
+    @media print {
       body::before { display: none; }
       .card {
         background: white;
@@ -162,18 +162,6 @@
       .qr-wrapper { border: 1px solid #ddd; }
       .logo img { filter: invert(1); }
     }
-
-
-
-
-
-
-      50%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); transform: scale(1.2); }
-      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); transform: scale(1); }
-    }
-
-
-
   </style>
 </head>
 <body>
@@ -229,6 +217,5 @@
     correctLevel: QRCode.CorrectLevel.M
   });
 </script>
-</div>
 </body>
 </html>
