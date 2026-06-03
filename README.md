@@ -5,14 +5,16 @@ Built with plain HTML/JS, Supabase (real-time database), and Vercel (hosting).
 
 ---
 
-## Four Pages
+## Pages
 
 | URL | Purpose |
 |-----|---------|
 | `/display` | **Display screen** — put this on the meeting room TV/projector |
 | `/join` | **Request to speak** — board members open this on their phones (QR code) |
-| `/moderator` | **Moderator panel** — manages topics, queue, and speaker timer |
-| `/qr` | **QR code page** — print this and place on the meeting table |
+| `/vote` | **Live vote** — board members open this on their phones to vote in a poll |
+| `/moderator` | **Moderator panel** — manages topics, queue, speaker timer, and polls |
+| `/qr` | **Queue QR** — print this so members can scan to join the speaker queue |
+| `/qr-vote` | **Vote QR** — print this so members can scan to vote in a poll |
 
 ---
 
@@ -80,6 +82,19 @@ Your four pages will be live at:
 8. **New topic:** Type a new topic in the Moderator panel — this automatically clears the queue
 
 ---
+
+## Live Polls
+
+The moderator can run a quick poll that members vote on from their phones.
+
+1. **In the Moderator panel:** scroll to **Live Poll**, type a question, fill in the options (use **+ Add Option** for more), and click **Launch Poll**
+2. **Members:** scan the **Vote QR** (`/qr-vote`) or open `/vote` — they tap an option to vote and can change their choice until voting closes
+3. **Results** update live on the **Display screen** (in place of the queue), on every voter's phone, and in the Moderator panel
+4. **When done:** click **Close Voting** to lock in the result (it stays on screen), then **New Poll** to clear it and return the display to the speaker queue
+
+Each phone gets one vote (tracked per device), changeable until the poll is closed. The **Clear Everything & Reset Meeting** button also removes any active poll.
+
+> **Note:** If you set up your Supabase project before this feature existed, run `supabase/polls.sql` once in the Supabase SQL Editor to add the poll tables. New setups already include it via `supabase/schema.sql`.
 
 ## Customisation
 

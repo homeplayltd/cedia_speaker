@@ -589,15 +589,21 @@
       font-weight: 300;
     }
 
-    /* QR code join prompt */
-    .qr-join {
+    /* QR codes (join + vote) — bottom-left cluster */
+    .display-qrs {
       position: fixed;
       bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 1.5vw);
       left: 3vw;
       display: flex;
+      align-items: flex-end;
+      gap: 1.6vw;
+      z-index: 140;
+    }
+
+    .qr-join {
+      display: flex;
       align-items: center;
       gap: 1vw;
-      z-index: 140;
     }
 
     .qr-join-code {
@@ -634,15 +640,11 @@
       color: var(--text-dim);
     }
 
-    /* Queue closed indicator */
+    /* Queue closed indicator (sits where the join QR would be) */
     .queue-closed-banner {
       display: none;
-      position: fixed;
-      bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 1.5vw);
-      left: 3vw;
       align-items: center;
       gap: 0.8vw;
-      z-index: 140;
       padding: 0.6vw 1.2vw;
       background: rgba(239,68,68,0.1);
       border: 1px solid rgba(239,68,68,0.3);
@@ -663,6 +665,103 @@
       letter-spacing: 0.15em;
       text-transform: uppercase;
       color: var(--danger);
+    }
+
+    /* ---- POLL PANEL ---- */
+    .poll-panel { display: none; flex-direction: column; gap: 1.5vh; min-width: 0; }
+    .poll-panel.visible { display: flex; }
+
+    .poll-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1vw;
+    }
+
+    .poll-panel-status {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.6rem, 0.9vw, 0.8rem);
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 0.4vh 0.9vw;
+      border-radius: 0.4vw;
+    }
+    .poll-panel-status.open {
+      color: var(--success);
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+    .poll-panel-status.closed {
+      color: var(--danger);
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+    }
+
+    .poll-panel-question {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(1.3rem, 2.4vw, 2.6rem);
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .poll-panel-results { display: flex; flex-direction: column; gap: 1.1vh; }
+
+    .poll-bar {
+      position: relative;
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 0.6vw;
+      padding: 1.4vh 1.2vw;
+      animation: slide-in 0.3s ease-out;
+    }
+
+    .poll-bar.winning { border-color: rgba(193,80,39,0.55); }
+
+    .poll-bar-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0%;
+      background: rgba(193,80,39,0.2);
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 0;
+    }
+    .poll-bar.winning .poll-bar-fill { background: rgba(193,80,39,0.32); }
+
+    .poll-bar-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 1vw;
+    }
+
+    .poll-bar-text {
+      flex: 1;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(1rem, 1.7vw, 1.9rem);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .poll-bar-pct {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(1.2rem, 1.9vw, 2.2rem);
+      font-weight: 800;
+      color: var(--accent);
+      flex-shrink: 0;
+      min-width: 2.4em;
+      text-align: right;
+    }
+
+    .poll-panel-total {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.7rem, 1vw, 0.9rem);
+      color: var(--text-dim);
     }
   </style>
 </head>
@@ -698,7 +797,7 @@
     </div>
 
     <!-- Queue -->
-    <div class="queue-panel">
+    <div class="queue-panel" id="queuePanel">
       <div class="queue-header">
         <div class="section-label">Next Up</div>
         <div class="queue-count" id="queueCount"></div>
@@ -708,23 +807,44 @@
       </div>
     </div>
 
+    <!-- Poll (shown in place of the queue when a poll is active) -->
+    <div class="poll-panel" id="pollPanel">
+      <div class="poll-panel-header">
+        <div class="section-label">Live Poll</div>
+        <span class="poll-panel-status open" id="pollPanelStatus">Voting Open</span>
+      </div>
+      <div class="poll-panel-question" id="pollPanelQuestion"></div>
+      <div class="poll-panel-results" id="pollPanelResults"></div>
+      <div class="poll-panel-total" id="pollPanelTotal"></div>
+    </div>
+
   </div>
 
 </div><!-- end .screen -->
 
-<!-- QR code join prompt (hidden when queue closed) -->
-<div class="qr-join" id="qrJoin">
-  <div class="qr-join-code" id="displayQr"></div>
-  <div class="qr-join-text">
-    <div class="qr-join-label">Scan to Join</div>
-    <div class="qr-join-url">speaker-queue.homeplay.tv/join</div>
+<!-- QR codes: Join (hidden when queue closed) + Vote (always shown) -->
+<div class="display-qrs">
+  <div class="qr-join" id="qrJoin">
+    <div class="qr-join-code" id="displayQr"></div>
+    <div class="qr-join-text">
+      <div class="qr-join-label">Scan to Join</div>
+      <div class="qr-join-url">speaker-queue.homeplay.tv/join</div>
+    </div>
   </div>
-</div>
 
-<!-- Queue closed banner (shown when queue closed) -->
-<div class="queue-closed-banner" id="queueClosedBanner">
-  <span class="queue-closed-icon">🔒</span>
-  <span class="queue-closed-text">Queue Closed</span>
+  <!-- Queue closed banner (replaces the join QR when the queue is closed) -->
+  <div class="queue-closed-banner" id="queueClosedBanner">
+    <span class="queue-closed-icon">🔒</span>
+    <span class="queue-closed-text">Queue Closed</span>
+  </div>
+
+  <div class="qr-join" id="qrVote">
+    <div class="qr-join-code" id="displayVoteQr"></div>
+    <div class="qr-join-text">
+      <div class="qr-join-label">Scan to Vote</div>
+      <div class="qr-join-url">speaker-queue.homeplay.tv/vote</div>
+    </div>
+  </div>
 </div>
 
 <!-- BOTTOM BAR -->
@@ -918,6 +1038,16 @@
     correctLevel: QRCode.CorrectLevel.M
   });
 
+  // Generate QR code for vote page
+  new QRCode(document.getElementById('displayVoteQr'), {
+    text: 'https://speaker-queue.homeplay.tv/vote',
+    width: 200,
+    height: 200,
+    colorDark: '#02050B',
+    colorLight: '#FFFFFF',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
   const client = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
   let state = { topic: '', current_speaker_name: null, current_speaker_subject: null, speaker_started_at: null };
@@ -925,6 +1055,11 @@
   let timerInterval = null;
   let kittenState = 'hidden'; // hidden | nervous | fired
   let hasFired = false;
+
+  // Poll state
+  let activePoll = null;
+  let pollCounts = [];
+  let pollTotal = 0;
 
   // ---- Data ----
   async function loadState() {
@@ -1011,6 +1146,77 @@
         </div>
       </div>
     `).join('');
+  }
+
+  // ---- Poll ----
+  async function loadPoll() {
+    const { data } = await client
+      .from('polls')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    activePoll = data || null;
+    if (activePoll) await loadPollVotes();
+    renderPoll();
+  }
+
+  async function loadPollVotes() {
+    if (!activePoll) return;
+    const { data } = await client
+      .from('poll_votes')
+      .select('option_index')
+      .eq('poll_id', activePoll.id);
+    const opts = activePoll.options || [];
+    pollCounts = opts.map(() => 0);
+    pollTotal = 0;
+    (data || []).forEach(v => {
+      if (v.option_index >= 0 && v.option_index < pollCounts.length) {
+        pollCounts[v.option_index]++;
+        pollTotal++;
+      }
+    });
+  }
+
+  function renderPoll() {
+    const queuePanel = document.getElementById('queuePanel');
+    const pollPanel  = document.getElementById('pollPanel');
+
+    if (!activePoll) {
+      pollPanel.classList.remove('visible');
+      queuePanel.style.display = 'flex';
+      return;
+    }
+
+    // Poll takes over the right column
+    queuePanel.style.display = 'none';
+    pollPanel.classList.add('visible');
+
+    const statusEl = document.getElementById('pollPanelStatus');
+    statusEl.textContent = activePoll.is_closed ? 'Final Results' : 'Voting Open';
+    statusEl.className = 'poll-panel-status ' + (activePoll.is_closed ? 'closed' : 'open');
+
+    document.getElementById('pollPanelQuestion').textContent = activePoll.question;
+
+    const opts = activePoll.options || [];
+    const max = Math.max(0, ...pollCounts);
+    document.getElementById('pollPanelResults').innerHTML = opts.map((opt, i) => {
+      const c = pollCounts[i] || 0;
+      const pct = pollTotal > 0 ? Math.round((c / pollTotal) * 100) : 0;
+      const winning = pollTotal > 0 && c === max && c > 0;
+      return `
+        <div class="poll-bar${winning ? ' winning' : ''}">
+          <div class="poll-bar-fill" style="width:${pct}%"></div>
+          <div class="poll-bar-row">
+            <div class="poll-bar-text">${esc(opt)}</div>
+            <div class="poll-bar-pct">${pct}%</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('pollPanelTotal').textContent =
+      (pollTotal === 1 ? '1 vote' : pollTotal + ' votes') + ' • scan to vote';
   }
 
   // ---- Timer ----
@@ -1207,6 +1413,10 @@
     client.channel('display-channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'meeting_state' }, () => loadState())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, () => loadQueue())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'polls' }, () => loadPoll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'poll_votes' }, async () => {
+        if (activePoll) { await loadPollVotes(); renderPoll(); }
+      })
       .subscribe(status => {
         const ind = document.getElementById('liveIndicator');
         const txt = document.getElementById('liveIndicatorText');
@@ -1217,11 +1427,12 @@
   }
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) { loadState(); loadQueue(); }
+    if (!document.hidden) { loadState(); loadQueue(); loadPoll(); }
   });
 
   loadState();
   loadQueue();
+  loadPoll();
   subscribeRealtime();
 </script>
 </body>

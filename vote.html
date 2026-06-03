@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Speaker Queue — Vote</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #02050B;
+      --accent: #C15027;
+      --text: #FFFFFF;
+      --text-dim: rgba(255,255,255,0.5);
+      --text-faint: rgba(255,255,255,0.18);
+      --card: rgba(255,255,255,0.05);
+      --card-border: rgba(255,255,255,0.09);
+      --input-bg: rgba(255,255,255,0.07);
+      --input-border: rgba(255,255,255,0.12);
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 100% 40% at 50% 0%, rgba(193,80,39,0.14) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0 0 calc(52px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .header {
+      padding: 24px 24px 20px;
+      margin: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .logo img { height: 42px; opacity: 0.9; }
+
+    .vote-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    /* Poll section */
+    .poll-section {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      flex: 1;
+    }
+
+    .poll-meta { display: flex; flex-direction: column; gap: 6px; }
+
+    .poll-eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .poll-question {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.85rem;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .options { display: flex; flex-direction: column; gap: 12px; }
+
+    /* An option is a tappable button that doubles as a result bar */
+    .option {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      text-align: left;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    }
+
+    .option:active { transform: scale(0.99); }
+    .option:hover:not(:disabled) { border-color: var(--accent); }
+    .option:disabled { cursor: default; }
+
+    .option.selected {
+      border-color: var(--accent);
+      background: rgba(193,80,39,0.12);
+    }
+
+    /* The fill bar grows with the vote share */
+    .option-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0%;
+      background: rgba(193,80,39,0.18);
+      transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 0;
+    }
+
+    .option.selected .option-fill { background: rgba(193,80,39,0.30); }
+
+    .option-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .option-text {
+      flex: 1;
+      font-size: 1.02rem;
+      font-weight: 500;
+      line-height: 1.35;
+      min-width: 0;
+    }
+
+    .option-check {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--text-faint);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem;
+      color: white;
+      transition: all 0.2s;
+    }
+
+    .option.selected .option-check {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .option-pct {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      flex-shrink: 0;
+      min-width: 44px;
+      text-align: right;
+      display: none;
+    }
+
+    .results-on .option-pct { display: block; }
+
+    .poll-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 6px;
+    }
+
+    .vote-total {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .vote-hint {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .vote-hint .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: var(--success);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+    }
+
+    .vote-hint .pill.closed {
+      background: rgba(239,68,68,0.1);
+      border-color: rgba(239,68,68,0.3);
+      color: var(--danger);
+    }
+
+    /* Waiting (no active poll) */
+    .waiting-view {
+      display: none;
+      padding: 56px 24px;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      text-align: center;
+      flex: 1;
+    }
+
+    .waiting-view.active { display: flex; }
+
+    .waiting-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(193,80,39,0.1);
+      border: 2px solid rgba(193,80,39,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+    }
+
+    .waiting-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+    }
+
+    .waiting-sub {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      max-width: 300px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--danger);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      max-width: 320px;
+      text-align: center;
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Home button */
+    .home-btn {
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.55);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .home-btn:hover {
+      background: rgba(193,80,39,0.15);
+      border-color: rgba(193,80,39,0.35);
+      color: #FFFFFF;
+    }
+    .home-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    /* Live connection indicator */
+    .live-indicator {
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(2,5,11,0.7);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 20px;
+      backdrop-filter: blur(6px);
+      pointer-events: none;
+      transition: border-color 0.4s, background 0.4s;
+    }
+
+    .live-indicator.disconnected {
+      background: rgba(239,68,68,0.08);
+      border-color: rgba(239,68,68,0.4);
+    }
+
+    .live-indicator-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      flex-shrink: 0;
+      animation: live-pulse 1.5s ease-in-out infinite;
+      transition: background 0.4s;
+    }
+
+    .live-indicator.disconnected .live-indicator-dot {
+      background: var(--danger);
+      animation: none;
+    }
+
+    @keyframes live-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.8); transform: scale(1); }
+      50%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); transform: scale(1.2); }
+      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); transform: scale(1); }
+    }
+
+    .live-indicator-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--success);
+      transition: color 0.4s;
+    }
+
+    .live-indicator.disconnected .live-indicator-text { color: var(--danger); }
+
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(2,5,11,0.92);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      backdrop-filter: blur(8px);
+      z-index: 150;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <a href="/" style="text-decoration:none;"><div class="logo">
+      <img src="https://cedia.org/site/assets/files/1033/cedia_logo_tagline_white_email-1.png" alt="CEDIA">
+    </div></a>
+    <div class="vote-label">Live Vote</div>
+  </div>
+
+  <!-- Active poll -->
+  <div class="poll-section" id="pollSection" style="display:none">
+    <div class="poll-meta">
+      <div class="poll-eyebrow" id="pollEyebrow">Cast your vote</div>
+      <div class="poll-question" id="pollQuestion"></div>
+    </div>
+
+    <div class="options" id="options"></div>
+
+    <div class="poll-foot">
+      <div class="vote-total" id="voteTotal">0 votes</div>
+      <div id="voteStatus"></div>
+    </div>
+  </div>
+
+  <!-- No active poll -->
+  <div class="waiting-view active" id="waitingView">
+    <div class="waiting-icon">🗳️</div>
+    <div class="waiting-title">No Active Poll</div>
+    <div class="waiting-sub">There's no poll running right now. When the moderator starts one, it'll appear here automatically.</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const client = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+  // Stable per-device voter id (so one phone = one vote, changeable)
+  let voterId = localStorage.getItem('cedia_voter_id');
+  if (!voterId) {
+    voterId = (window.crypto && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'v_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('cedia_voter_id', voterId);
+  }
+
+  let poll = null;        // active poll row
+  let counts = [];        // votes per option index
+  let total = 0;
+  let myChoice = null;    // option index this device picked
+
+  // ---- Load active poll ----
+  async function loadPoll() {
+    const { data } = await client
+      .from('polls')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!data) {
+      poll = null;
+      showWaiting();
+      return;
+    }
+
+    // New poll appeared → reset my choice
+    if (!poll || poll.id !== data.id) {
+      myChoice = null;
+    }
+    poll = data;
+    await loadVotes();
+    await loadMyChoice();
+    renderPoll();
+  }
+
+  async function loadMyChoice() {
+    if (!poll) return;
+    const { data } = await client
+      .from('poll_votes')
+      .select('option_index')
+      .eq('poll_id', poll.id)
+      .eq('voter_id', voterId)
+      .maybeSingle();
+    myChoice = data ? data.option_index : null;
+  }
+
+  async function loadVotes() {
+    if (!poll) return;
+    const { data } = await client
+      .from('poll_votes')
+      .select('option_index')
+      .eq('poll_id', poll.id);
+    const opts = poll.options || [];
+    counts = opts.map(() => 0);
+    total = 0;
+    (data || []).forEach(v => {
+      if (v.option_index >= 0 && v.option_index < counts.length) {
+        counts[v.option_index]++;
+        total++;
+      }
+    });
+  }
+
+  // ---- Vote ----
+  async function vote(idx) {
+    if (!poll || poll.is_closed) return;
+    const prev = myChoice;
+    myChoice = idx;           // optimistic
+    renderPoll();
+    const { error } = await client.rpc('cast_vote', {
+      p_poll_id: poll.id,
+      p_voter_id: voterId,
+      p_option_index: idx
+    });
+    if (error) {
+      myChoice = prev;
+      renderPoll();
+      showToast(error.message.includes('not open') ? 'Voting has closed' : 'Something went wrong. Try again.');
+      return;
+    }
+    // Refresh tally (realtime will also catch up)
+    await loadVotes();
+    renderPoll();
+  }
+
+  // ---- Render ----
+  function showWaiting() {
+    document.getElementById('pollSection').style.display = 'none';
+    document.getElementById('waitingView').classList.add('active');
+  }
+
+  function renderPoll() {
+    if (!poll) { showWaiting(); return; }
+    document.getElementById('waitingView').classList.remove('active');
+    const section = document.getElementById('pollSection');
+    section.style.display = 'flex';
+
+    document.getElementById('pollQuestion').textContent = poll.question;
+
+    const hasVoted = myChoice !== null;
+    const closed = !!poll.is_closed;
+    // Show result bars/percentages once you've voted or once voting is closed
+    const showResults = hasVoted || closed;
+    section.classList.toggle('results-on', showResults);
+
+    document.getElementById('pollEyebrow').textContent =
+      closed ? 'Final results' : (hasVoted ? 'Your vote is in — tap to change' : 'Cast your vote');
+
+    const opts = poll.options || [];
+    const list = document.getElementById('options');
+    list.innerHTML = opts.map((opt, i) => {
+      const c = counts[i] || 0;
+      const pct = total > 0 ? Math.round((c / total) * 100) : 0;
+      const selected = myChoice === i;
+      return `
+        <button class="option${selected ? ' selected' : ''}" ${closed ? 'disabled' : ''} onclick="vote(${i})">
+          <div class="option-fill" style="width:${showResults ? pct : 0}%"></div>
+          <div class="option-row">
+            <div class="option-check">${selected ? '✓' : ''}</div>
+            <div class="option-text">${esc(opt)}</div>
+            <div class="option-pct">${pct}%</div>
+          </div>
+        </button>`;
+    }).join('');
+
+    document.getElementById('voteTotal').textContent =
+      total === 1 ? '1 vote' : total + ' votes';
+
+    const statusEl = document.getElementById('voteStatus');
+    if (closed) {
+      statusEl.innerHTML = '<span class="pill closed">🔒 Voting closed</span>';
+    } else if (hasVoted) {
+      statusEl.innerHTML = '<span class="pill">✓ Voted</span>';
+    } else {
+      statusEl.innerHTML = '';
+    }
+  }
+
+  // ---- Toast ----
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3200);
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---- Realtime ----
+  client.channel('vote-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'polls' }, () => loadPoll())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'poll_votes' }, async () => {
+      if (poll) { await loadVotes(); renderPoll(); }
+    })
+    .subscribe(status => {
+      const ind = document.getElementById('liveIndicator');
+      const txt = document.getElementById('liveIndicatorText');
+      const connected = status === 'SUBSCRIBED';
+      ind.classList.toggle('disconnected', !connected);
+      txt.textContent = connected ? 'Live Connection' : 'Reconnecting...';
+    });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadPoll();
+  });
+
+  loadPoll();
+</script>
+
+<div class="bottom-bar">
+  <div style="flex:1"></div>
+  <div class="live-indicator" id="liveIndicator">
+    <div class="live-indicator-dot"></div>
+    <span class="live-indicator-text" id="liveIndicatorText">Live Connection</span>
+  </div>
+  <div style="flex:1; display:flex; justify-content:flex-end;">
+    <a class="home-btn" href="/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+        <path d="M9 21V12h6v9"/>
+      </svg>
+      Home
+    </a>
+  </div>
+</div>
+</body>
+</html>

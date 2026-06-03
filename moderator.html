@@ -629,6 +629,144 @@
       backdrop-filter: blur(8px);
       z-index: 150;
     }
+
+    /* ---- Poll ---- */
+    .poll-builder { display: flex; flex-direction: column; gap: 12px; }
+
+    .poll-question-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .poll-question-input:focus { border-color: var(--accent); }
+    .poll-question-input::placeholder { color: var(--text-faint); }
+
+    .poll-options-edit { display: flex; flex-direction: column; gap: 8px; }
+
+    .poll-option-row { display: flex; gap: 8px; align-items: center; }
+
+    .poll-option-input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 10px 13px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .poll-option-input:focus { border-color: var(--accent); }
+    .poll-option-input::placeholder { color: var(--text-faint); }
+
+    .poll-builder-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    /* Poll results (active view) */
+    .poll-active-question {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .poll-results { display: flex; flex-direction: column; gap: 10px; }
+
+    .poll-result {
+      position: relative;
+      overflow: hidden;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .poll-result.winning { border-color: rgba(193,80,39,0.5); }
+
+    .poll-result-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0%;
+      background: rgba(193,80,39,0.18);
+      transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 0;
+    }
+
+    .poll-result-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .poll-result-text {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: 500;
+      min-width: 0;
+    }
+
+    .poll-result-count {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .poll-result-pct {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+      min-width: 48px;
+      text-align: right;
+    }
+
+    .poll-active-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .poll-status-pill {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 6px;
+    }
+    .poll-status-pill.open {
+      background: var(--success-dim);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: var(--success);
+    }
+    .poll-status-pill.closed {
+      background: var(--danger-dim);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: var(--danger);
+    }
+
+    .poll-active-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
   </style>
 </head>
 <body>
@@ -716,6 +854,37 @@
     </div>
   </div>
 
+  <!-- Live Poll -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Live Poll</div>
+      <span id="pollStatusBadge"></span>
+    </div>
+
+    <!-- Builder (no active poll) -->
+    <div class="poll-builder" id="pollBuilder">
+      <input type="text" class="poll-question-input" id="pollQuestionInput" placeholder="Poll question, e.g. Approve the proposed budget?" maxlength="140">
+      <div class="poll-options-edit" id="pollOptionsEdit"></div>
+      <div class="poll-builder-actions">
+        <button class="btn btn-ghost" onclick="addPollOption()">+ Add Option</button>
+        <button class="btn btn-primary" id="btnLaunchPoll" onclick="launchPoll()" style="margin-left:auto">▶ Launch Poll</button>
+      </div>
+    </div>
+
+    <!-- Active poll (results + controls) -->
+    <div id="pollActive" style="display:none">
+      <div class="poll-active-question" id="pollActiveQuestion"></div>
+      <div class="poll-results" id="pollResults"></div>
+      <div class="poll-active-foot">
+        <span class="poll-result-count" id="pollTotal">0 votes</span>
+        <div class="poll-active-buttons">
+          <button class="btn btn-danger" id="btnClosePoll" onclick="closePoll()">■ Close Voting</button>
+          <button class="btn btn-ghost" onclick="clearPoll()">New Poll</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Danger Zone -->
   <div class="section danger-zone">
     <div class="section-header">
@@ -745,6 +914,11 @@
   let queueItems = [];
   let timerInterval = null;
   let pendingAction = null;
+
+  // Poll state
+  let activePoll = null;     // active poll row (or null)
+  let pollCounts = [];       // votes per option index
+  let pollTotal = 0;
 
   // ---- Load ----
   async function loadState() {
@@ -907,9 +1081,10 @@
 
   // ---- Reset ----
   async function showResetModal() {
-    if (!confirm('Reset everything? This will clear the topic, queue, and current speaker.')) return;
+    if (!confirm('Reset everything? This will clear the topic, queue, current speaker, and any active poll.')) return;
     const { error } = await client.rpc('reset_meeting');
-    if (error) alert('Error resetting meeting: ' + error.message);
+    if (error) { alert('Error resetting meeting: ' + error.message); return; }
+    await client.rpc('clear_active_poll');
   }
 
   // ---- Queue open/close toggle ----
@@ -993,6 +1168,162 @@
     }
   }
 
+  // ================================================================
+  // POLLS
+  // ================================================================
+
+  // ---- Builder: option inputs ----
+  function addPollOption(value) {
+    const wrap = document.getElementById('pollOptionsEdit');
+    const idx = wrap.children.length;
+    const row = document.createElement('div');
+    row.className = 'poll-option-row';
+    row.innerHTML = `
+      <input type="text" class="poll-option-input" placeholder="Option ${idx + 1}" maxlength="80">
+      <button class="btn-remove" title="Remove option" onclick="removePollOption(this)">✕</button>`;
+    wrap.appendChild(row);
+    if (typeof value === 'string') row.querySelector('input').value = value;
+  }
+
+  function removePollOption(btn) {
+    const wrap = document.getElementById('pollOptionsEdit');
+    if (wrap.children.length <= 2) return; // keep at least two
+    btn.closest('.poll-option-row').remove();
+    renumberPollOptions();
+  }
+
+  function renumberPollOptions() {
+    document.querySelectorAll('#pollOptionsEdit .poll-option-input').forEach((inp, i) => {
+      if (!inp.value) inp.placeholder = 'Option ' + (i + 1);
+    });
+  }
+
+  function ensureBuilderSeeded() {
+    const wrap = document.getElementById('pollOptionsEdit');
+    if (wrap.children.length === 0) { addPollOption(); addPollOption(); }
+  }
+
+  // ---- Launch ----
+  async function launchPoll() {
+    const question = document.getElementById('pollQuestionInput').value.trim();
+    const options = Array.from(document.querySelectorAll('#pollOptionsEdit .poll-option-input'))
+      .map(i => i.value.trim())
+      .filter(Boolean);
+
+    if (!question) { alert('Please enter a poll question.'); return; }
+    if (options.length < 2) { alert('Please add at least two options.'); return; }
+
+    const btn = document.getElementById('btnLaunchPoll');
+    btn.disabled = true;
+    btn.textContent = 'Launching...';
+
+    const { error } = await client.rpc('launch_poll', { p_question: question, p_options: options });
+    if (error) alert('Error launching poll: ' + error.message);
+
+    btn.disabled = false;
+    btn.textContent = '▶ Launch Poll';
+    // Realtime will refresh; load immediately too
+    loadPoll();
+  }
+
+  // ---- Close voting ----
+  async function closePoll() {
+    if (!activePoll) return;
+    const { error } = await client.rpc('close_poll', { p_id: activePoll.id });
+    if (error) alert('Error closing poll: ' + error.message);
+  }
+
+  // ---- Clear / new poll ----
+  async function clearPoll() {
+    if (!activePoll) return;
+    if (!confirm('Remove this poll from the screens and start a new one?')) return;
+    const { error } = await client.rpc('clear_active_poll');
+    if (error) { alert('Error clearing poll: ' + error.message); return; }
+    // Reset builder
+    document.getElementById('pollQuestionInput').value = '';
+    document.getElementById('pollOptionsEdit').innerHTML = '';
+    ensureBuilderSeeded();
+    loadPoll();
+  }
+
+  // ---- Load active poll + votes ----
+  async function loadPoll() {
+    const { data } = await client
+      .from('polls')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    activePoll = data || null;
+    if (activePoll) await loadPollVotes();
+    renderPoll();
+  }
+
+  async function loadPollVotes() {
+    if (!activePoll) return;
+    const { data } = await client
+      .from('poll_votes')
+      .select('option_index')
+      .eq('poll_id', activePoll.id);
+    const opts = activePoll.options || [];
+    pollCounts = opts.map(() => 0);
+    pollTotal = 0;
+    (data || []).forEach(v => {
+      if (v.option_index >= 0 && v.option_index < pollCounts.length) {
+        pollCounts[v.option_index]++;
+        pollTotal++;
+      }
+    });
+  }
+
+  // ---- Render poll ----
+  function renderPoll() {
+    const builder = document.getElementById('pollBuilder');
+    const active = document.getElementById('pollActive');
+    const badge = document.getElementById('pollStatusBadge');
+
+    if (!activePoll) {
+      builder.style.display = 'flex';
+      active.style.display = 'none';
+      badge.innerHTML = '';
+      ensureBuilderSeeded();
+      return;
+    }
+
+    builder.style.display = 'none';
+    active.style.display = 'block';
+    badge.innerHTML = activePoll.is_closed
+      ? '<span class="poll-status-pill closed">Voting Closed</span>'
+      : '<span class="poll-status-pill open">Voting Open</span>';
+
+    document.getElementById('pollActiveQuestion').textContent = activePoll.question;
+
+    const opts = activePoll.options || [];
+    const max = Math.max(0, ...pollCounts);
+    const list = document.getElementById('pollResults');
+    list.innerHTML = opts.map((opt, i) => {
+      const c = pollCounts[i] || 0;
+      const pct = pollTotal > 0 ? Math.round((c / pollTotal) * 100) : 0;
+      const winning = pollTotal > 0 && c === max && c > 0;
+      return `
+        <div class="poll-result${winning ? ' winning' : ''}">
+          <div class="poll-result-fill" style="width:${pct}%"></div>
+          <div class="poll-result-row">
+            <div class="poll-result-text">${esc(opt)}</div>
+            <div class="poll-result-count">${c}</div>
+            <div class="poll-result-pct">${pct}%</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('pollTotal').textContent =
+      pollTotal === 1 ? '1 vote' : pollTotal + ' votes';
+
+    const closeBtn = document.getElementById('btnClosePoll');
+    closeBtn.style.display = activePoll.is_closed ? 'none' : 'inline-block';
+  }
+
   // ---- Modal ----
   function showModal(title, body, onConfirm) {
     pendingAction = onConfirm;
@@ -1020,6 +1351,10 @@
     client.channel('mod-channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'meeting_state' }, () => loadState())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, () => loadQueue())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'polls' }, () => loadPoll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'poll_votes' }, async () => {
+        if (activePoll) { await loadPollVotes(); renderPoll(); }
+      })
       .subscribe(status => {
         const ind = document.getElementById('liveIndicator');
         const txt = document.getElementById('liveIndicatorText');
@@ -1048,11 +1383,13 @@
 
   // ---- Page visibility ----
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) { loadState(); loadQueue(); }
+    if (!document.hidden) { loadState(); loadQueue(); loadPoll(); }
   });
 
   // ---- Init ----
   loadState().then(() => loadQueue());
+  ensureBuilderSeeded();
+  loadPoll();
   subscribeRealtime();
 
   // Keyboard: Enter to set topic
